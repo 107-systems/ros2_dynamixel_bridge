@@ -8,7 +8,7 @@
  * INCLUDE
  **************************************************************************************/
 
-#include <l3xz_io_dynamixel/MX28AR.h>
+#include <l3xz_io_dynamixel/MX28ARSyncGroup.h>
 
 #include <assert.h>
 
@@ -16,37 +16,42 @@
  * NAMESPACE
  **************************************************************************************/
 
-namespace l3xz
+namespace l3xz::MX28AR
 {
-
-using namespace dynamixelplusplus;
 
 /**************************************************************************************
  * PUBLIC MEMBER FUNCTIONS
  **************************************************************************************/
 
-void MX28AR::setTorqueEnable(TorqueEnable const torque_enable)
+void SyncGroup::setTorqueEnable(TorqueEnable const torque_enable)
 {
   write(static_cast<uint16_t>(ControlTable::TorqueEnable), static_cast<uint8_t>(torque_enable));
 }
 
-void MX28AR::setOperatingMode(OperatingMode const operating_mode)
+void SyncGroup::setOperatingMode(OperatingMode const operating_mode)
 {
   write(static_cast<uint16_t>(ControlTable::OperatingMode), static_cast<uint8_t>(operating_mode));
 }
 
-void MX28AR::setGoalPosition(float const pan_angle_deg, float const tilt_angle_deg)
+void SyncGroup::setGoalPosition(std::vector<float> const & angle_deg_vect)
 {
-  auto isValidAngle = [](float const angle_deg) { return (angle_deg >= 0.0f && angle_deg <= 360.0f); };
-  assert(isValidAngle(pan_angle_deg));
-  assert(isValidAngle(tilt_angle_deg));
+  auto limit_angle = [](float const angle_deg)
+  {
+    if      (angle_deg < 0.0f)   return 0.0f;
+    else if (angle_deg > 360.0f) return 360.0f;
+    else                         return angle_deg;
+  };
 
   auto toRegValue = [](float const angle_deg) { return static_cast<uint32_t>((angle_deg * 4096.0f) / 360.0f); };
-  std::vector<uint32_t> const raw_goal_position_vect{toRegValue(pan_angle_deg), toRegValue(tilt_angle_deg)};
+
+  std::vector<uint32_t> raw_goal_position_vect;
+  for (auto angle_deg : angle_deg_vect)
+    raw_goal_position_vect.push_back(toRegValue(limit_angle(angle_deg)));
+
   write(static_cast<uint16_t>(ControlTable::GoalPosition), raw_goal_position_vect);
 }
 
-void MX28AR::setGoalVelocity(float const pan_velocity_rpm, float const tilt_velocity_rpm)
+void SyncGroup::setGoalVelocity(std::vector<float> const & velocity_rpm_vect)
 {
   static float const RPM_per_LSB = 0.229f;
   static float const MAX_VELOCITY_rpm = RPM_per_LSB * 1023.0f;
@@ -54,7 +59,7 @@ void MX28AR::setGoalVelocity(float const pan_velocity_rpm, float const tilt_velo
 
   auto limit_velocity = [](float const rpm)
   {
-    if (rpm < MIN_VELOCITY_rpm)      return MIN_VELOCITY_rpm;
+    if      (rpm < MIN_VELOCITY_rpm) return MIN_VELOCITY_rpm;
     else if (rpm > MAX_VELOCITY_rpm) return MAX_VELOCITY_rpm;
     else                             return rpm;
   };
@@ -65,12 +70,14 @@ void MX28AR::setGoalVelocity(float const pan_velocity_rpm, float const tilt_velo
     return static_cast<uint32_t>(rpm_lsb_signed);
   };
 
-  std::vector<uint32_t> const raw_goal_velocity_vect{toRegValue(limit_velocity(pan_velocity_rpm)),
-                                                     toRegValue(limit_velocity(tilt_velocity_rpm))};
+  std::vector<uint32_t> raw_goal_velocity_vect;
+  for (auto vel_rpm : velocity_rpm_vect)
+    raw_goal_velocity_vect.push_back(toRegValue(limit_velocity(vel_rpm)));
+
   write(static_cast<uint16_t>(ControlTable::GoalVelocity), raw_goal_velocity_vect);
 }
 
-std::tuple<float, float> MX28AR::getPresentPosition()
+std::tuple<float, float> SyncGroup::getPresentPosition()
 {
   std::vector<uint32_t> const angle_raw_vect = read<uint32_t>(static_cast<uint16_t>(ControlTable::PresentPosition));
 
@@ -84,4 +91,4 @@ std::tuple<float, float> MX28AR::getPresentPosition()
  * NAMESPACE
  **************************************************************************************/
 
-} /* l3xz */
+} /* l3xz::MX28AR */
