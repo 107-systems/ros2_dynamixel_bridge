@@ -27,8 +27,16 @@ Node::Node()
 : rclcpp::Node("l3xz_io_dynamixel")
 , _pan_servo_id{DEFAULT_PAN_SERVO_ID}
 , _tilt_servo_id{DEFAULT_TILT_SERVO_ID}
-, _pan_angular_velocity_rad_per_sec{0.0f}
-, _tilt_angular_velocity_rad_per_sec{0.0f}
+, _head_vel_msg
+{
+  []()
+  {
+    l3xz_io_dynamixel::msg::HeadVelocity msg;
+    msg.pan_vel_rad_per_sec = 0.0f;
+    msg.tilt_vel_rad_per_sec = 0.0f;
+    return msg;
+  } ()
+}
 , _prev_io_loop_timepoint{std::chrono::steady_clock::now()}
 {
   /* Configure the Dynamixel MX-28AR servos of the pan/tilt head. */
@@ -75,7 +83,7 @@ Node::Node()
   RCLCPP_INFO(get_logger(), "initialize pan/servo in position control mode and set to initial angle.");
 
   /* Instantiate MX-28AR controller and continue with pan/tilt head initialization. */
-  _mx28_head_sync_ctrl = std::make_shared<MX28AR::SyncGroup>(dyn_ctrl, dynamixelplusplus::Dynamixel::IdVect{_pan_servo_id, _tilt_servo_id});
+  _mx28_head_sync_ctrl = std::make_shared<MX28AR::HeadSyncGroup>(dyn_ctrl, _pan_servo_id, _tilt_servo_id);
 
   _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
   _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
@@ -128,8 +136,7 @@ Node::Node()
     ("/l3xz/io/cmd_vel_head", 1,
     [this](l3xz_io_dynamixel::msg::HeadVelocity::SharedPtr const msg)
     {
-      _pan_angular_velocity_rad_per_sec  = msg->pan_vel_rad_per_sec;
-      _tilt_angular_velocity_rad_per_sec = msg->tilt_vel_rad_per_sec;
+      _head_vel_msg = *msg;
     });
 
   /* Configure periodic control loop function. */
@@ -170,11 +177,11 @@ void Node::io_loop()
 
   std::map<dynamixelplusplus::Dynamixel::Id, float> goal_velocity_rpm;
 
-  float const pan_angular_velocity_dps  = _pan_angular_velocity_rad_per_sec  * 180.0f / M_PI;
-  float const tilt_angular_velocity_dps = _tilt_angular_velocity_rad_per_sec * 180.0f / M_PI;
+  float const pan_angular_velocity_dps  = _head_vel_msg.pan_vel_rad_per_sec  * 180.0f / M_PI;
+  float const tilt_angular_velocity_dps = _head_vel_msg.tilt_vel_rad_per_sec * 180.0f / M_PI;
 
   static float constexpr DPS_per_RPM = 360.0f / 60.0f;
-  goal_velocity_rpm[_pan_servo_id]  = pan_angular_velocity_dps / DPS_per_RPM;
+  goal_velocity_rpm[_pan_servo_id]  = pan_angular_velocity_dps  / DPS_per_RPM;
   goal_velocity_rpm[_tilt_servo_id] = tilt_angular_velocity_dps / DPS_per_RPM;
 
   /* Checking current head position and stopping if either

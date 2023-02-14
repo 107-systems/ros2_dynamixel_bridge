@@ -41,12 +41,12 @@ public:
 
 private:
   dynamixelplusplus::Dynamixel::Id _pan_servo_id, _tilt_servo_id;
-  float _pan_angular_velocity_rad_per_sec, _tilt_angular_velocity_rad_per_sec;
 
+  l3xz_io_dynamixel::msg::HeadVelocity _head_vel_msg;
   rclcpp::Subscription<l3xz_io_dynamixel::msg::HeadVelocity>::SharedPtr _head_io_sub;
   rclcpp::TimerBase::SharedPtr _io_loop_timer;
 
-  std::shared_ptr<MX28AR::SyncGroup> _mx28_head_sync_ctrl;
+  std::shared_ptr<MX28AR::HeadSyncGroup> _mx28_head_sync_ctrl;
 
   std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};

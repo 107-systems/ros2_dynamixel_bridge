@@ -41,10 +41,29 @@ public:
   /* MEMBER FUNCTIONS *****************************************************************/
   void setTorqueEnable (TorqueEnable const torque_enable);
   void setOperatingMode(OperatingMode const operating_mode);
-  void setGoalPosition (float const pan_angle_deg, float const tilt_angle_deg);
-  void setGoalVelocity (float const pan_velocity_rpm, float const tilt_velocity_rpm);
+  void setGoalPosition (std::vector<float> const & angle_deg_vect);
+  void setGoalVelocity (std::vector<float> const & velocity_rpm_vect);
 
   std::tuple<float, float> getPresentPosition();
+};
+
+class HeadSyncGroup : public SyncGroup
+{
+public:
+  HeadSyncGroup(dynamixelplusplus::SharedDynamixel dyn_ctrl,
+                dynamixelplusplus::Dynamixel::Id const pan_servo_id,
+                dynamixelplusplus::Dynamixel::Id const tilt_servo_id)
+  : SyncGroup(dyn_ctrl, dynamixelplusplus::Dynamixel::IdVect{pan_servo_id, tilt_servo_id})
+  { }
+
+  void setGoalPosition(float const pan_angle_deg, float const tilt_angle_deg)
+  {
+    return SyncGroup::setGoalPosition(std::vector<float>{pan_angle_deg, tilt_angle_deg});
+  }
+  void setGoalVelocity (float const pan_velocity_rpm, float const tilt_velocity_rpm)
+  {
+    return SyncGroup::setGoalVelocity(std::vector<float>{pan_velocity_rpm, tilt_velocity_rpm});
+  }
 };
 
 /**************************************************************************************
