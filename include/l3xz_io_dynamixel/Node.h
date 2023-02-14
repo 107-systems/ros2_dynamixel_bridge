@@ -40,8 +40,6 @@ public:
   ~Node();
 
 private:
-  dynamixelplusplus::Dynamixel::Id _pan_servo_id, _tilt_servo_id;
-
   l3xz_io_dynamixel::msg::HeadVelocity _head_vel_msg;
   rclcpp::Subscription<l3xz_io_dynamixel::msg::HeadVelocity>::SharedPtr _head_io_sub;
   rclcpp::TimerBase::SharedPtr _io_loop_timer;
