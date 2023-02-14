@@ -20,7 +20,7 @@
 
 #include <l3xz_io_dynamixel/msg/head_velocity.hpp>
 
-#include "MX28AR.h"
+#include "MX28ARSyncGroup.h"
 
 /**************************************************************************************
  * NAMESPACE
@@ -45,7 +45,7 @@ private:
   rclcpp::Subscription<l3xz_io_dynamixel::msg::HeadVelocity>::SharedPtr _head_io_sub;
   rclcpp::TimerBase::SharedPtr _io_loop_timer;
 
-  std::shared_ptr<MX28AR> _mx28_ctrl;
+  std::shared_ptr<MX28AR::SyncGroup> _mx28_head_sync_ctrl;
 
   std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};

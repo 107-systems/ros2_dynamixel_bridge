@@ -8,7 +8,7 @@
  * INCLUDE
  **************************************************************************************/
 
-#include <l3xz_io_dynamixel/MX28AR.h>
+#include <l3xz_io_dynamixel/MX28ARSyncGroup.h>
 
 #include <assert.h>
 
@@ -16,26 +16,24 @@
  * NAMESPACE
  **************************************************************************************/
 
-namespace l3xz
+namespace l3xz::MX28AR
 {
-
-using namespace dynamixelplusplus;
 
 /**************************************************************************************
  * PUBLIC MEMBER FUNCTIONS
  **************************************************************************************/
 
-void MX28AR::setTorqueEnable(TorqueEnable const torque_enable)
+void SyncGroup::setTorqueEnable(TorqueEnable const torque_enable)
 {
   write(static_cast<uint16_t>(ControlTable::TorqueEnable), static_cast<uint8_t>(torque_enable));
 }
 
-void MX28AR::setOperatingMode(OperatingMode const operating_mode)
+void SyncGroup::setOperatingMode(OperatingMode const operating_mode)
 {
   write(static_cast<uint16_t>(ControlTable::OperatingMode), static_cast<uint8_t>(operating_mode));
 }
 
-void MX28AR::setGoalPosition(float const pan_angle_deg, float const tilt_angle_deg)
+void SyncGroup::setGoalPosition(float const pan_angle_deg, float const tilt_angle_deg)
 {
   auto isValidAngle = [](float const angle_deg) { return (angle_deg >= 0.0f && angle_deg <= 360.0f); };
   assert(isValidAngle(pan_angle_deg));
@@ -46,7 +44,7 @@ void MX28AR::setGoalPosition(float const pan_angle_deg, float const tilt_angle_d
   write(static_cast<uint16_t>(ControlTable::GoalPosition), raw_goal_position_vect);
 }
 
-void MX28AR::setGoalVelocity(float const pan_velocity_rpm, float const tilt_velocity_rpm)
+void SyncGroup::setGoalVelocity(float const pan_velocity_rpm, float const tilt_velocity_rpm)
 {
   static float const RPM_per_LSB = 0.229f;
   static float const MAX_VELOCITY_rpm = RPM_per_LSB * 1023.0f;
@@ -70,7 +68,7 @@ void MX28AR::setGoalVelocity(float const pan_velocity_rpm, float const tilt_velo
   write(static_cast<uint16_t>(ControlTable::GoalVelocity), raw_goal_velocity_vect);
 }
 
-std::tuple<float, float> MX28AR::getPresentPosition()
+std::tuple<float, float> SyncGroup::getPresentPosition()
 {
   std::vector<uint32_t> const angle_raw_vect = read<uint32_t>(static_cast<uint16_t>(ControlTable::PresentPosition));
 
@@ -84,4 +82,4 @@ std::tuple<float, float> MX28AR::getPresentPosition()
  * NAMESPACE
  **************************************************************************************/
 
-} /* l3xz */
+} /* l3xz::MX28AR */

@@ -15,7 +15,7 @@ include_directories(${L3XZ_IO_DYNAMIXEL_TARGET}
 )
 #######################################################################################
 add_executable(${L3XZ_IO_DYNAMIXEL_TARGET}
-  src/MX28AR.cpp
+  src/MX28ARSyncGroup.cpp
   src/Node.cpp
   src/main.cpp
 )

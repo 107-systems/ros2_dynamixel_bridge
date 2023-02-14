@@ -10,8 +10,6 @@
 
 #include <l3xz_io_dynamixel/Node.h>
 
-#include <l3xz_io_dynamixel/MX28AR.h>
-
 /**************************************************************************************
  * NAMESPACE
  **************************************************************************************/
@@ -77,12 +75,12 @@ Node::Node()
   RCLCPP_INFO(get_logger(), "initialize pan/servo in position control mode and set to initial angle.");
 
   /* Instantiate MX-28AR controller and continue with pan/tilt head initialization. */
-  _mx28_ctrl = std::make_shared<MX28AR>(dyn_ctrl, _pan_servo_id, _tilt_servo_id);
+  _mx28_head_sync_ctrl = std::make_shared<MX28AR::SyncGroup>(dyn_ctrl, dynamixelplusplus::Dynamixel::IdVect{_pan_servo_id, _tilt_servo_id});
 
-  _mx28_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
-  _mx28_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-  _mx28_ctrl->setGoalPosition (get_parameter("pan_servo_initial_angle").as_double(), get_parameter("tilt_servo_initial_angle").as_double());
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+  _mx28_head_sync_ctrl->setGoalPosition (get_parameter("pan_servo_initial_angle").as_double(), get_parameter("tilt_servo_initial_angle").as_double());
 
   bool pan_target_reached = false, tilt_target_reached = false;
   float actual_pan_angle_deg = 0.0f, actual_tilt_angle_deg = 0.0f;
@@ -91,7 +89,7 @@ Node::Node()
   {
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    auto [pan_angle_deg, tilt_angle_deg] = _mx28_ctrl->getPresentPosition();
+    auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition();
 
     actual_pan_angle_deg  = pan_angle_deg;
     actual_tilt_angle_deg = tilt_angle_deg;
@@ -119,10 +117,10 @@ Node::Node()
     rclcpp::shutdown();
   }
 
-  _mx28_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
-  _mx28_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-  _mx28_ctrl->setGoalVelocity (0.0, 0.0);
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
 
   /* Configure subscribers and publishers. */
 
@@ -176,7 +174,7 @@ void Node::io_loop()
   /* Checking current head position and stopping if either
    * pan or tilt angle would exceed the maximum allowed angle.
    */
-  auto [pan_angle_deg, tilt_angle_deg] = _mx28_ctrl->getPresentPosition();
+  auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition();
 
   if ((pan_angle_deg < get_parameter("pan_servo_min_angle").as_double()) && (pan_angular_velocity_dps < 0.0f))
     goal_velocity_rpm[_pan_servo_id] = 0.0f;
@@ -190,7 +188,7 @@ void Node::io_loop()
   /* Write the computed RPM value to the Dynamixel MX-28AR
    * servos of the pan/tilt head.
    */
-  _mx28_ctrl->setGoalVelocity(goal_velocity_rpm[_pan_servo_id], goal_velocity_rpm[_tilt_servo_id]);
+  _mx28_head_sync_ctrl->setGoalVelocity(goal_velocity_rpm[_pan_servo_id], goal_velocity_rpm[_tilt_servo_id]);
 }
 
 /**************************************************************************************
