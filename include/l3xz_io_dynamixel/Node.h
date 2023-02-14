@@ -11,6 +11,7 @@
  * INCLUDE
  **************************************************************************************/
 
+#include <chrono>
 #include <memory>
 
 #include <rclcpp/rclcpp.hpp>
@@ -46,6 +47,8 @@ private:
 
   std::shared_ptr<MX28AR> _mx28_ctrl;
 
+  std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
+  static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
   void io_loop();
 
   static int                              constexpr DEFAULT_SERIAL_BAUDRATE          = 115200;
