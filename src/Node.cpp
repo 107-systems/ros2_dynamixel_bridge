@@ -31,6 +31,7 @@ Node::Node()
 , _tilt_servo_id{DEFAULT_TILT_SERVO_ID}
 , _pan_angular_velocity_rad_per_sec{0.0f}
 , _tilt_angular_velocity_rad_per_sec{0.0f}
+, _prev_io_loop_timepoint{std::chrono::steady_clock::now()}
 {
   /* Configure the Dynamixel MX-28AR servos of the pan/tilt head. */
 
@@ -136,7 +137,7 @@ Node::Node()
   /* Configure periodic control loop function. */
 
   _io_loop_timer = create_wall_timer
-    (std::chrono::milliseconds(50),
+    (std::chrono::milliseconds(IO_LOOP_RATE.count()),
      [this]()
      {
       this->io_loop();
@@ -151,6 +152,18 @@ Node::Node()
 
 void Node::io_loop()
 {
+  auto const now = std::chrono::steady_clock::now();
+  auto const io_loop_rate = (now - _prev_io_loop_timepoint);
+  if (io_loop_rate > (IO_LOOP_RATE + std::chrono::milliseconds(1)))
+    RCLCPP_WARN_THROTTLE(get_logger(),
+                         *get_clock(),
+                         1000,
+                         "io_loop should be called every %ld ms, but is %ld ms instead",
+                         IO_LOOP_RATE.count(),
+                         std::chrono::duration_cast<std::chrono::milliseconds>(io_loop_rate).count());
+  _prev_io_loop_timepoint = now;
+
+
   std::map<dynamixelplusplus::Dynamixel::Id, float> goal_velocity_rpm;
 
   float const pan_angular_velocity_dps  = _pan_angular_velocity_rad_per_sec  * 180.0f / M_PI;
