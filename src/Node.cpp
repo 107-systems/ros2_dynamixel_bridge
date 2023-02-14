@@ -125,12 +125,12 @@ Node::Node()
 
   /* Configure subscribers and publishers. */
 
-  _head_sub = create_subscription<geometry_msgs::msg::Twist>
-    ("/l3xz/cmd_vel_head", 10,
-    [this](geometry_msgs::msg::Twist::SharedPtr const msg)
+  _head_io_sub = create_subscription<l3xz_io_dynamixel::msg::HeadVelocity>
+    ("/l3xz/io/cmd_vel_head", 1,
+    [this](l3xz_io_dynamixel::msg::HeadVelocity::SharedPtr const msg)
     {
-      _pan_angular_velocity_rad_per_sec  = msg->angular.z;
-      _tilt_angular_velocity_rad_per_sec = msg->angular.y;
+      _pan_angular_velocity_rad_per_sec  = msg->pan_vel_rad_per_sec;
+      _tilt_angular_velocity_rad_per_sec = msg->tilt_vel_rad_per_sec;
     });
 
   /* Configure periodic control loop function. */

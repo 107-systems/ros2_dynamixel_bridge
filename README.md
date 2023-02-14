@@ -4,7 +4,7 @@
 [![Build Status](https://github.com/107-systems/l3xz_io_dynamixel/actions/workflows/ros2.yml/badge.svg)](https://github.com/107-systems/l3xz_io_dynamixel/actions/workflows/ros2.yml)
 [![Spell Check status](https://github.com/107-systems/l3xz_io_dynamixel/actions/workflows/spell-check.yml/badge.svg)](https://github.com/107-systems/l3xz_io_dynamixel/actions/workflows/spell-check.yml)
 
-Head controller for the L3X-Z electric/hydraulic hexapod robot.
+This repository contains the `l3xz_io_dynamixel` node which allows [L3X-Z](https://github.com/107-systems/l3xz)'s other ROS nodes to communicate with its Robotis Dynamixel servos.
 
 <p align="center">
   <a href="https://github.com/107-systems/l3xz"><img src="https://raw.githubusercontent.com/107-systems/.github/main/logo/l3xz-logo-memento-mori-github.png" width="40%"></a>
@@ -20,14 +20,14 @@ colcon_ws$ colcon build --packages-select l3xz_io_dynamixel
 #### How-to-run
 ```bash
 colcon_ws$ . install/setup.bash
-colcon_ws$ ros2 launch l3xz_io_dynamixel head.py
+colcon_ws$ ros2 launch l3xz_io_dynamixel io_dynamixel.py
 ```
 
 #### Interface Documentation
 ##### Subscribed Topics
 | Default name | Type |
 |:-:|:-:|
-| `/l3xz/cmd_vel_head` | [`geometry_msgs/Twist`](http://docs.ros.org/en/api/geometry_msgs/html/msg/Twist.html) |
+| `/l3xz/io/cmd_vel_head` | [`HeadVelocity`](msg/HeadVelocity.msg) |
 
 ##### Parameters
 | Name | Default | Description |

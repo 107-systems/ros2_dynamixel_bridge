@@ -1,0 +1,2 @@
+float32 pan_vel_rad_per_sec
+float32 tilt_vel_rad_per_sec

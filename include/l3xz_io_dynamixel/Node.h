@@ -15,9 +15,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/twist.hpp>
-
 #include <dynamixel++/dynamixel++.h>
+
+#include <l3xz_io_dynamixel/msg/head_velocity.hpp>
 
 #include "MX28AR.h"
 
@@ -41,7 +41,7 @@ private:
   dynamixelplusplus::Dynamixel::Id _pan_servo_id, _tilt_servo_id;
   float _pan_angular_velocity_rad_per_sec, _tilt_angular_velocity_rad_per_sec;
 
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr _head_sub;
+  rclcpp::Subscription<l3xz_io_dynamixel::msg::HeadVelocity>::SharedPtr _head_io_sub;
   rclcpp::TimerBase::SharedPtr _io_loop_timer;
 
   std::shared_ptr<MX28AR> _mx28_ctrl;
