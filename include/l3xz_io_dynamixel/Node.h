@@ -36,7 +36,8 @@ namespace l3xz::head
 class Node : public rclcpp::Node
 {
 public:
-  Node();
+   Node();
+  ~Node();
 
 private:
   dynamixelplusplus::Dynamixel::Id _pan_servo_id, _tilt_servo_id;

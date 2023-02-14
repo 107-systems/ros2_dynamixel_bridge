@@ -144,6 +144,12 @@ Node::Node()
   RCLCPP_INFO(get_logger(), "node initialization complete.");
 }
 
+Node::~Node()
+{
+  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+}
+
 /**************************************************************************************
  * PRIVATE MEMBER FUNCTIONS
  **************************************************************************************/
