@@ -1,14 +1,14 @@
 /**
  * Copyright (c) 2022 LXRobotics GmbH.
  * Author: Alexander Entinger <alexander.entinger@lxrobotics.com>
- * Contributors: https://github.com/107-systems/l3xz_io_dynamixel/graphs/contributors.
+ * Contributors: https://github.com/107-systems/l3xz_ros_dynamixel_bridge/graphs/contributors.
  */
 
 /**************************************************************************************
  * INCLUDE
  **************************************************************************************/
 
-#include <l3xz_io_dynamixel/Node.h>
+#include <l3xz_ros_dynamixel_bridge/Node.h>
 
 /**************************************************************************************
  * NAMESPACE
@@ -24,12 +24,12 @@ using namespace dynamixelplusplus;
  **************************************************************************************/
 
 Node::Node()
-: rclcpp::Node("l3xz_io_dynamixel")
+: rclcpp::Node("l3xz_ros_dynamixel_bridge")
 , _head_vel_msg
 {
   []()
   {
-    l3xz_io_dynamixel::msg::HeadVelocity msg;
+    l3xz_ros_dynamixel_bridge::msg::HeadVelocity msg;
     msg.pan_vel_rad_per_sec = 0.0f;
     msg.tilt_vel_rad_per_sec = 0.0f;
     return msg;
@@ -130,9 +130,9 @@ Node::Node()
 
   /* Configure subscribers and publishers. */
 
-  _head_io_sub = create_subscription<l3xz_io_dynamixel::msg::HeadVelocity>
+  _head_io_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>
     ("/l3xz/head/velocity/target", 1,
-    [this](l3xz_io_dynamixel::msg::HeadVelocity::SharedPtr const msg)
+    [this](l3xz_ros_dynamixel_bridge::msg::HeadVelocity::SharedPtr const msg)
     {
       _head_vel_msg = *msg;
     });
