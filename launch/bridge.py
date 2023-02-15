@@ -4,10 +4,10 @@ from launch_ros.actions import Node
 def generate_launch_description():
   return LaunchDescription([
     Node(
-      package='l3xz_io_dynamixel',
+      package='l3xz_ros_dynamixel_bridge',
       namespace='l3xz',
-      executable='l3xz_io_dynamixel_node',
-      name='l3xz_io_dynamixel',
+      executable='l3xz_ros_dynamixel_bridge_node',
+      name='l3xz_ros_dynamixel_bridge',
       output='screen',
       emulate_tty=True,
       parameters=[

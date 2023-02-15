@@ -1,8 +1,8 @@
 #######################################################################################
 cmake_minimum_required(VERSION 3.8)
 #######################################################################################
-project(l3xz_io_dynamixel)
-set(L3XZ_IO_DYNAMIXEL_TARGET ${PROJECT_NAME}_node)
+project(l3xz_ros_dynamixel_bridge)
+set(L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET ${PROJECT_NAME}_node)
 #######################################################################################
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -10,31 +10,31 @@ find_package(rosidl_default_generators REQUIRED)
 #######################################################################################
 add_subdirectory(external/libdynamixelplusplus)
 #######################################################################################
-include_directories(${L3XZ_IO_DYNAMIXEL_TARGET}
+include_directories(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET}
   include
 )
 #######################################################################################
-add_executable(${L3XZ_IO_DYNAMIXEL_TARGET}
+add_executable(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET}
   src/MX28ARSyncGroup.cpp
   src/Node.cpp
   src/main.cpp
 )
 #######################################################################################
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(${L3XZ_IO_DYNAMIXEL_TARGET} PRIVATE -Wall -Werror -Wextra -Wpedantic)
+  target_compile_options(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} PRIVATE -Wall -Werror -Wextra -Wpedantic)
 endif()
 #######################################################################################
-target_compile_features(${L3XZ_IO_DYNAMIXEL_TARGET} PRIVATE cxx_std_17)
+target_compile_features(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} PRIVATE cxx_std_17)
 #######################################################################################
-target_link_libraries(${L3XZ_IO_DYNAMIXEL_TARGET} dynamixel++)
+target_link_libraries(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} dynamixel++)
 #######################################################################################
-ament_target_dependencies(${L3XZ_IO_DYNAMIXEL_TARGET} rclcpp)
+ament_target_dependencies(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} rclcpp)
 #######################################################################################
 rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/HeadVelocity.msg"
         )
 #######################################################################################
-rosidl_target_interfaces(${L3XZ_IO_DYNAMIXEL_TARGET} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_target_interfaces(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} ${PROJECT_NAME} "rosidl_typesupport_cpp")
 #######################################################################################
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -48,7 +48,7 @@ if(BUILD_TESTING)
 endif()
 #######################################################################################
 install(TARGETS
-  ${L3XZ_IO_DYNAMIXEL_TARGET}
+  ${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET}
   DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY
