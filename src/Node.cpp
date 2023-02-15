@@ -131,7 +131,7 @@ Node::Node()
   /* Configure subscribers and publishers. */
 
   _head_io_sub = create_subscription<l3xz_io_dynamixel::msg::HeadVelocity>
-    ("/l3xz/io/cmd_vel_head", 1,
+    ("/l3xz/head/velocity/target", 1,
     [this](l3xz_io_dynamixel::msg::HeadVelocity::SharedPtr const msg)
     {
       _head_vel_msg = *msg;

@@ -27,7 +27,7 @@ colcon_ws$ ros2 launch l3xz_io_dynamixel io_dynamixel.py
 ##### Subscribed Topics
 | Default name | Type |
 |:-:|:-:|
-| `/l3xz/io/cmd_vel_head` | [`HeadVelocity`](msg/HeadVelocity.msg) |
+| `/l3xz/head/velocity/target` | [`HeadVelocity`](msg/HeadVelocity.msg) |
 
 ##### Parameters
 | Name | Default | Description |
