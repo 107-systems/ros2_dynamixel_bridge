@@ -49,6 +49,8 @@ private:
   std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
   void io_loop();
+
+  void declare_parameter_all();
 };
 
 /**************************************************************************************
