@@ -40,15 +40,47 @@ Node::Node()
   /* Configure the Dynamixel MX-28AR servos of the pan/tilt head. */
 
   declare_parameter("serial_port", "/dev/ttyUSB0");
-  declare_parameter("serial_port_baudrate", DEFAULT_SERIAL_BAUDRATE);
-  declare_parameter("pan_servo_id", DEFAULT_PAN_SERVO_ID);
-  declare_parameter("tilt_servo_id", DEFAULT_TILT_SERVO_ID);
-  declare_parameter("pan_servo_initial_angle", DEFAULT_PAN_SERVO_INITIAL_ANGLE);
-  declare_parameter("pan_servo_min_angle", DEFAULT_PAN_SERVO_MIN_ANGLE);
-  declare_parameter("pan_servo_max_angle", DEFAULT_PAN_SERVO_MAX_ANGLE);
-  declare_parameter("tilt_servo_initial_angle", DEFAULT_TILT_SERVO_INITIAL_ANGLE);
-  declare_parameter("tilt_servo_min_angle", DEFAULT_TILT_SERVO_MIN_ANGLE);
-  declare_parameter("tilt_servo_max_angle", DEFAULT_TILT_SERVO_MAX_ANGLE);
+  declare_parameter("serial_port_baudrate", 115200);
+
+  declare_parameter("left_front_coxa_servo_id", 1);
+  declare_parameter("left_front_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("left_front_coxa_servo_min_angle", 170.0f);
+  declare_parameter("left_front_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("left_middle_coxa_servo_id", 2);
+  declare_parameter("left_middle_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("left_middle_coxa_servo_min_angle", 170.0f);
+  declare_parameter("left_middle_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("left_back_coxa_servo_id", 3);
+  declare_parameter("left_back_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("left_back_coxa_servo_min_angle", 170.0f);
+  declare_parameter("left_back_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("right_back_coxa_servo_id", 4);
+  declare_parameter("right_back_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("right_back_coxa_servo_min_angle", 170.0f);
+  declare_parameter("right_back_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("right_middle_coxa_servo_id", 5);
+  declare_parameter("right_middle_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("right_middle_coxa_servo_min_angle", 170.0f);
+  declare_parameter("right_middle_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("right_front_coxa_servo_id", 6);
+  declare_parameter("right_front_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("right_front_coxa_servo_min_angle", 170.0f);
+  declare_parameter("right_front_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("pan_servo_id", 7);
+  declare_parameter("pan_servo_initial_angle", 180.0f);
+  declare_parameter("pan_servo_min_angle", 170.0f);
+  declare_parameter("pan_servo_max_angle", 190.0f);
+
+  declare_parameter("tilt_servo_id", 8);
+  declare_parameter("tilt_servo_initial_angle", 180.0f);
+  declare_parameter("tilt_servo_min_angle", 170.0f);
+  declare_parameter("tilt_servo_max_angle", 190.0f);
 
   std::string const serial_port  = get_parameter("serial_port").as_string();
   int const serial_port_baudrate = get_parameter("serial_port_baudrate").as_int();

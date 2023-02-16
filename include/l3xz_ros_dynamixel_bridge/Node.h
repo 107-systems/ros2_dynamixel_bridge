@@ -49,16 +49,6 @@ private:
   std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
   void io_loop();
-
-  static int                              constexpr DEFAULT_SERIAL_BAUDRATE          = 115200;
-  static dynamixelplusplus::Dynamixel::Id constexpr DEFAULT_PAN_SERVO_ID             = 7;
-  static dynamixelplusplus::Dynamixel::Id constexpr DEFAULT_TILT_SERVO_ID            = 8;
-  static float                            constexpr DEFAULT_PAN_SERVO_INITIAL_ANGLE  = 180.0f;
-  static float                            constexpr DEFAULT_PAN_SERVO_MIN_ANGLE      = DEFAULT_PAN_SERVO_INITIAL_ANGLE - 10.f;
-  static float                            constexpr DEFAULT_PAN_SERVO_MAX_ANGLE      = DEFAULT_PAN_SERVO_INITIAL_ANGLE + 10.f;
-  static float                            constexpr DEFAULT_TILT_SERVO_INITIAL_ANGLE = 180.0f;
-  static float                            constexpr DEFAULT_TILT_SERVO_MIN_ANGLE     = DEFAULT_TILT_SERVO_INITIAL_ANGLE - 10.f;
-  static float                            constexpr DEFAULT_TILT_SERVO_MAX_ANGLE     = DEFAULT_TILT_SERVO_INITIAL_ANGLE + 10.f;
 };
 
 /**************************************************************************************
