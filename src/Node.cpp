@@ -160,7 +160,20 @@ void Node::io_loop()
                          std::chrono::duration_cast<std::chrono::milliseconds>(io_loop_rate).count());
   _prev_io_loop_timepoint = now;
 
+  /* Retrieve the current position and publish it. ************************************/
+  auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition_head();
 
+  auto publishServoAngle = [](rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr const pub, float const angle_deg)
+  {
+    std_msgs::msg::Float32 msg;
+    msg.data = angle_deg;
+    pub->publish(msg);
+  };
+  publishServoAngle(_angle_pub[Servo::Pan], pan_angle_deg);
+  publishServoAngle(_angle_pub[Servo::Tilt], tilt_angle_deg);
+
+
+  /* Control the head. ****************************************************************/
   float pan_goal_velocity_rpm = 0.0f,
         tilt_goal_velocity_rpm = 0.0f;
 
@@ -174,7 +187,6 @@ void Node::io_loop()
   /* Checking current head position and stopping if either
    * pan or tilt angle would exceed the maximum allowed angle.
    */
-  auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition_head();
 
   if ((pan_angle_deg < get_parameter("pan_servo_min_angle").as_double()) && (pan_angular_velocity_dps < 0.0f))
     pan_goal_velocity_rpm = 0.0f;
