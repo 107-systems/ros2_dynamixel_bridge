@@ -31,8 +31,9 @@ target_link_libraries(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} dynamixel++)
 ament_target_dependencies(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} rclcpp)
 #######################################################################################
 rosidl_generate_interfaces(${PROJECT_NAME}
-        "msg/HeadVelocity.msg"
-        )
+  "msg/CoxaAngle.msg"
+  "msg/HeadVelocity.msg"
+)
 #######################################################################################
 rosidl_target_interfaces(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} ${PROJECT_NAME} "rosidl_typesupport_cpp")
 #######################################################################################

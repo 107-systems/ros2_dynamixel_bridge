@@ -35,21 +35,25 @@ Node::Node()
     return msg;
   } ()
 }
+, _coxa_angle_msg
+{
+  []()
+  {
+    l3xz_ros_dynamixel_bridge::msg::CoxaAngle msg;
+    msg.left_front_angle_deg = 0.0f;
+    msg.left_middle_angle_deg = 0.0f;
+    msg.left_back_angle_deg = 0.0f;
+    msg.right_front_angle_deg = 0.0f;
+    msg.right_middle_angle_deg = 0.0f;
+    msg.right_back_angle_deg = 0.0f;
+    return msg;
+  } ()
+}
 , _prev_io_loop_timepoint{std::chrono::steady_clock::now()}
 {
+  declare_parameter_all();
+
   /* Configure the Dynamixel MX-28AR servos of the pan/tilt head. */
-
-  declare_parameter("serial_port", "/dev/ttyUSB0");
-  declare_parameter("serial_port_baudrate", DEFAULT_SERIAL_BAUDRATE);
-  declare_parameter("pan_servo_id", DEFAULT_PAN_SERVO_ID);
-  declare_parameter("tilt_servo_id", DEFAULT_TILT_SERVO_ID);
-  declare_parameter("pan_servo_initial_angle", DEFAULT_PAN_SERVO_INITIAL_ANGLE);
-  declare_parameter("pan_servo_min_angle", DEFAULT_PAN_SERVO_MIN_ANGLE);
-  declare_parameter("pan_servo_max_angle", DEFAULT_PAN_SERVO_MAX_ANGLE);
-  declare_parameter("tilt_servo_initial_angle", DEFAULT_TILT_SERVO_INITIAL_ANGLE);
-  declare_parameter("tilt_servo_min_angle", DEFAULT_TILT_SERVO_MIN_ANGLE);
-  declare_parameter("tilt_servo_max_angle", DEFAULT_TILT_SERVO_MAX_ANGLE);
-
   std::string const serial_port  = get_parameter("serial_port").as_string();
   int const serial_port_baudrate = get_parameter("serial_port_baudrate").as_int();
 
@@ -65,77 +69,71 @@ Node::Node()
     dyn_id_list << static_cast<int>(id) << " ";
   RCLCPP_INFO(get_logger(), "detected Dynamixel MX-28AR: { %s}.", dyn_id_list.str().c_str());
 
-  Dynamixel::Id const pan_servo_id  = static_cast<Dynamixel::Id>(get_parameter("pan_servo_id").as_int());
-  Dynamixel::Id const tilt_servo_id = static_cast<Dynamixel::Id>(get_parameter("tilt_servo_id").as_int());
+  Dynamixel::Id const left_front_coxa_servo_id   = static_cast<Dynamixel::Id>(get_parameter("left_front_coxa_servo_id").as_int());
+  Dynamixel::Id const left_middle_coxa_servo_id  = static_cast<Dynamixel::Id>(get_parameter("left_middle_coxa_servo_id").as_int());
+  Dynamixel::Id const left_back_coxa_servo_id    = static_cast<Dynamixel::Id>(get_parameter("left_back_coxa_servo_id").as_int());
+  Dynamixel::Id const right_front_coxa_servo_id  = static_cast<Dynamixel::Id>(get_parameter("right_front_coxa_servo_id").as_int());
+  Dynamixel::Id const right_middle_coxa_servo_id = static_cast<Dynamixel::Id>(get_parameter("right_middle_coxa_servo_id").as_int());
+  Dynamixel::Id const right_back_coxa_servo_id   = static_cast<Dynamixel::Id>(get_parameter("right_back_coxa_servo_id").as_int());
+  Dynamixel::Id const pan_servo_id               = static_cast<Dynamixel::Id>(get_parameter("pan_servo_id").as_int());
+  Dynamixel::Id const tilt_servo_id              = static_cast<Dynamixel::Id>(get_parameter("tilt_servo_id").as_int());
 
-  if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [pan_servo_id](Dynamixel::Id const id) { return (id == pan_servo_id); })) {
-    RCLCPP_ERROR(get_logger(), "pan servo with configured id %d not online.", static_cast<int>(pan_servo_id));
+  std::vector<Dynamixel::Id> const L3XZ_DYNAMIXEL_ID_VECT =
+  {
+    left_front_coxa_servo_id,
+    left_middle_coxa_servo_id,
+    left_back_coxa_servo_id,
+    right_back_coxa_servo_id,
+    right_middle_coxa_servo_id,
+    right_front_coxa_servo_id,
+    pan_servo_id,
+    tilt_servo_id,
+  };
+
+  bool all_servos_online = true;
+  std::stringstream offline_id_list;
+  for (auto servo_id : L3XZ_DYNAMIXEL_ID_VECT)
+    if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [servo_id, &all_servos_online, &offline_id_list](Dynamixel::Id const id) { return (id == servo_id); }))
+    {
+      offline_id_list << static_cast<int>(servo_id) << " ";
+      all_servos_online = false;
+    }
+  if (!all_servos_online) {
+    RCLCPP_ERROR(get_logger(), "one or more MX-28AR OFF-line: { %s}, shutting down.", offline_id_list.str().c_str());
     rclcpp::shutdown();
+    return;
   }
 
-  if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [tilt_servo_id](Dynamixel::Id const id) { return (id == tilt_servo_id); })) {
-    RCLCPP_ERROR(get_logger(), "tilt servo with configured id %d not online.", static_cast<int>(tilt_servo_id));
-    rclcpp::shutdown();
-  }
-
-  RCLCPP_INFO(get_logger(), "initialize pan/servo in position control mode and set to initial angle.");
-
-  /* Instantiate MX-28AR controller and continue with pan/tilt head initialization. */
+  /* Initialize pan/tilt head. */
+  RCLCPP_INFO(get_logger(), "initialize pan/tilt servo.");
   _mx28_head_sync_ctrl = std::make_shared<MX28AR::HeadSyncGroup>(dyn_ctrl, pan_servo_id, tilt_servo_id);
+  init_pan_tilt_servos();
 
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-  _mx28_head_sync_ctrl->setGoalPosition (get_parameter("pan_servo_initial_angle").as_double(), get_parameter("tilt_servo_initial_angle").as_double());
-
-  bool pan_target_reached = false, tilt_target_reached = false;
-  float actual_pan_angle_deg = 0.0f, actual_tilt_angle_deg = 0.0f;
-  for (auto const start = std::chrono::system_clock::now();
-       (std::chrono::system_clock::now() - start) < std::chrono::seconds(5) && !pan_target_reached && !tilt_target_reached; )
-  {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
-    auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition();
-
-    actual_pan_angle_deg  = pan_angle_deg;
-    actual_tilt_angle_deg = tilt_angle_deg;
-
-    static float constexpr INITIAL_ANGLE_EPSILON_deg = 2.0f;
-    pan_target_reached  = fabs(actual_pan_angle_deg  - get_parameter("pan_servo_initial_angle").as_double())  < INITIAL_ANGLE_EPSILON_deg;
-    tilt_target_reached = fabs(actual_tilt_angle_deg - get_parameter("tilt_servo_initial_angle").as_double()) < INITIAL_ANGLE_EPSILON_deg;
-  }
-
-  if (!pan_target_reached)
-  {
-    RCLCPP_ERROR(get_logger(),
-                 "could not reach initial position for pan servo, target: %0.2f, actual: %0.2f.",
-                 get_parameter("pan_servo_initial_angle").as_double(),
-                 actual_pan_angle_deg);
-    rclcpp::shutdown();
-  }
-
-  if (!tilt_target_reached)
-  {
-    RCLCPP_ERROR(get_logger(),
-                 "could not reach initial position for tilt servo, target: %0.2f, actual: %0.2f.",
-                 get_parameter("tilt_servo_initial_angle").as_double(),
-                 actual_tilt_angle_deg);
-    rclcpp::shutdown();
-  }
-
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
+  /* Initialize coxa servos. */
+  RCLCPP_INFO(get_logger(), "initialize all coxa servos.");
+  _mx28_coxa_sync_ctrl = std::make_shared<MX28AR::CoxaSyncGroup>(dyn_ctrl,
+                                                                 left_front_coxa_servo_id,
+                                                                 left_middle_coxa_servo_id,
+                                                                 left_back_coxa_servo_id,
+                                                                 right_front_coxa_servo_id,
+                                                                 right_middle_coxa_servo_id,
+                                                                 right_back_coxa_servo_id);
+  init_coxa_servos();
 
   /* Configure subscribers and publishers. */
-
-  _head_io_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>
+  _head_vel_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>
     ("/l3xz/head/velocity/target", 1,
     [this](l3xz_ros_dynamixel_bridge::msg::HeadVelocity::SharedPtr const msg)
     {
       _head_vel_msg = *msg;
     });
+
+  _coxa_angle_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::CoxaAngle>
+    ("/l3xz/coxa/angle/target", 1,
+     [this](l3xz_ros_dynamixel_bridge::msg::CoxaAngle::SharedPtr const msg)
+     {
+       _coxa_angle_msg = *msg;
+     });
 
   /* Configure periodic control loop function. */
 
@@ -151,8 +149,10 @@ Node::Node()
 
 Node::~Node()
 {
-  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_head_sync_ctrl->setGoalVelocity(0.0, 0.0);
+  _mx28_head_sync_ctrl->setTorqueEnable(MX28AR::TorqueEnable::Off);
+
+  _mx28_coxa_sync_ctrl->setGoalVelocity(0.0);
 }
 
 /**************************************************************************************
@@ -201,6 +201,107 @@ void Node::io_loop()
    * servos of the pan/tilt head.
    */
   _mx28_head_sync_ctrl->setGoalVelocity(pan_goal_velocity_rpm, tilt_goal_velocity_rpm);
+}
+
+void Node::declare_parameter_all()
+{
+  declare_parameter("serial_port", "/dev/ttyUSB0");
+  declare_parameter("serial_port_baudrate", 115200);
+
+  declare_parameter("left_front_coxa_servo_id", 1);
+  declare_parameter("left_front_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("left_front_coxa_servo_min_angle", 170.0f);
+  declare_parameter("left_front_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("left_middle_coxa_servo_id", 2);
+  declare_parameter("left_middle_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("left_middle_coxa_servo_min_angle", 170.0f);
+  declare_parameter("left_middle_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("left_back_coxa_servo_id", 3);
+  declare_parameter("left_back_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("left_back_coxa_servo_min_angle", 170.0f);
+  declare_parameter("left_back_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("right_back_coxa_servo_id", 4);
+  declare_parameter("right_back_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("right_back_coxa_servo_min_angle", 170.0f);
+  declare_parameter("right_back_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("right_middle_coxa_servo_id", 5);
+  declare_parameter("right_middle_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("right_middle_coxa_servo_min_angle", 170.0f);
+  declare_parameter("right_middle_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("right_front_coxa_servo_id", 6);
+  declare_parameter("right_front_coxa_servo_initial_angle", 180.0f);
+  declare_parameter("right_front_coxa_servo_min_angle", 170.0f);
+  declare_parameter("right_front_coxa_servo_max_angle", 190.0f);
+
+  declare_parameter("pan_servo_id", 7);
+  declare_parameter("pan_servo_initial_angle", 180.0f);
+  declare_parameter("pan_servo_min_angle", 170.0f);
+  declare_parameter("pan_servo_max_angle", 190.0f);
+
+  declare_parameter("tilt_servo_id", 8);
+  declare_parameter("tilt_servo_initial_angle", 180.0f);
+  declare_parameter("tilt_servo_min_angle", 170.0f);
+  declare_parameter("tilt_servo_max_angle", 190.0f);
+}
+
+void Node::init_pan_tilt_servos()
+{
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+  _mx28_head_sync_ctrl->setGoalPosition (get_parameter("pan_servo_initial_angle").as_double(), get_parameter("tilt_servo_initial_angle").as_double());
+
+  bool pan_target_reached = false, tilt_target_reached = false;
+  float actual_pan_angle_deg = 0.0f, actual_tilt_angle_deg = 0.0f;
+  for (auto const start = std::chrono::system_clock::now();
+       (std::chrono::system_clock::now() - start) < std::chrono::seconds(5) && !pan_target_reached && !tilt_target_reached; )
+  {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition();
+
+    actual_pan_angle_deg  = pan_angle_deg;
+    actual_tilt_angle_deg = tilt_angle_deg;
+
+    static float constexpr INITIAL_ANGLE_EPSILON_deg = 2.0f;
+    pan_target_reached  = fabs(actual_pan_angle_deg  - get_parameter("pan_servo_initial_angle").as_double())  < INITIAL_ANGLE_EPSILON_deg;
+    tilt_target_reached = fabs(actual_tilt_angle_deg - get_parameter("tilt_servo_initial_angle").as_double()) < INITIAL_ANGLE_EPSILON_deg;
+  }
+
+  if (!pan_target_reached)
+  {
+    RCLCPP_ERROR(get_logger(),
+                 "could not reach initial position for pan servo, target: %0.2f, actual: %0.2f.",
+                 get_parameter("pan_servo_initial_angle").as_double(),
+                 actual_pan_angle_deg);
+    rclcpp::shutdown();
+  }
+
+  if (!tilt_target_reached)
+  {
+    RCLCPP_ERROR(get_logger(),
+                 "could not reach initial position for tilt servo, target: %0.2f, actual: %0.2f.",
+                 get_parameter("tilt_servo_initial_angle").as_double(),
+                 actual_tilt_angle_deg);
+    rclcpp::shutdown();
+  }
+
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
+}
+
+void Node::init_coxa_servos()
+{
+  _mx28_coxa_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_coxa_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+  _mx28_coxa_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 }
 
 /**************************************************************************************

@@ -1,0 +1,6 @@
+float32 left_front_angle_deg
+float32 left_middle_angle_deg
+float32 left_back_angle_deg
+float32 right_front_angle_deg
+float32 right_middle_angle_deg
+float32 right_back_angle_deg
