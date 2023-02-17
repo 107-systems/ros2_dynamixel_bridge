@@ -70,12 +70,12 @@ class CoxaSyncGroup : public SyncGroup
 {
 public:
   CoxaSyncGroup(dynamixelplusplus::SharedDynamixel dyn_ctrl,
-                Dynamixel::Id const left_front_coxa_servo_id,
-                Dynamixel::Id const left_middle_coxa_servo_id,
-                Dynamixel::Id const left_back_coxa_servo_id,
-                Dynamixel::Id const right_front_coxa_servo_id,
-                Dynamixel::Id const right_middle_coxa_servo_id,
-                Dynamixel::Id const right_back_coxa_servo_id)
+                dynamixelplusplus::Dynamixel::Id const left_front_coxa_servo_id,
+                dynamixelplusplus::Dynamixel::Id const left_middle_coxa_servo_id,
+                dynamixelplusplus::Dynamixel::Id const left_back_coxa_servo_id,
+                dynamixelplusplus::Dynamixel::Id const right_front_coxa_servo_id,
+                dynamixelplusplus::Dynamixel::Id const right_middle_coxa_servo_id,
+                dynamixelplusplus::Dynamixel::Id const right_back_coxa_servo_id)
     : SyncGroup(dyn_ctrl, dynamixelplusplus::Dynamixel::IdVect{left_front_coxa_servo_id, left_middle_coxa_servo_id, left_back_coxa_servo_id, right_front_coxa_servo_id, right_middle_coxa_servo_id, right_back_coxa_servo_id})
   { }
 
@@ -83,7 +83,7 @@ public:
   {
     Left_Front, Left_Middle, Left_Back, Right_Front, Right_Middle, Right_Back
   };
-  static std::array<CoxaId, 6> COXA_ID_ARRAY =
+  static std::array<CoxaId, 6> constexpr COXA_ID_ARRAY =
   {
     CoxaId::Left_Front, CoxaId::Left_Middle, CoxaId::Left_Back, CoxaId::Right_Front, CoxaId::Right_Middle, CoxaId::Right_Back
   };
