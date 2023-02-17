@@ -78,27 +78,28 @@ Node::Node()
   Dynamixel::Id const pan_servo_id               = static_cast<Dynamixel::Id>(get_parameter("pan_servo_id").as_int());
   Dynamixel::Id const tilt_servo_id              = static_cast<Dynamixel::Id>(get_parameter("tilt_servo_id").as_int());
 
-  std::array<Dynamixel::Id, 8> const L3XZ_DYNAMIXEL_ID_ARRAY =
+  std::vector<Dynamixel::Id> const L3XZ_DYNAMIXEL_ID_VECT =
   {
     left_front_coxa_servo_id,
     left_middle_coxa_servo_id,
     left_back_coxa_servo_id,
-    right_front_coxa_servo_id,
-    right_middle_coxa_servo_id,
     right_back_coxa_servo_id,
+    right_middle_coxa_servo_id,
+    right_front_coxa_servo_id,
     pan_servo_id,
+    tilt_servo_id,
   };
 
   bool all_servos_online = true;
   std::stringstream offline_id_list;
-  for (auto servo_id : L3XZ_DYNAMIXEL_ID_ARRAY)
+  for (auto servo_id : L3XZ_DYNAMIXEL_ID_VECT)
     if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [servo_id, &all_servos_online, &offline_id_list](Dynamixel::Id const id) { return (id == servo_id); }))
     {
       offline_id_list << static_cast<int>(servo_id) << " ";
       all_servos_online = false;
     }
   if (!all_servos_online) {
-    RCLCPP_ERROR(get_logger(), "one or more servos OFF-line{ %s}, shutting down.", offline_id_list.str().c_str());
+    RCLCPP_ERROR(get_logger(), "one or more MX-28AR OFF-line: { %s}, shutting down.", offline_id_list.str().c_str());
     rclcpp::shutdown();
     return;
   }
