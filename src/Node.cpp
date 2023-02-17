@@ -78,23 +78,30 @@ Node::Node()
   Dynamixel::Id const pan_servo_id               = static_cast<Dynamixel::Id>(get_parameter("pan_servo_id").as_int());
   Dynamixel::Id const tilt_servo_id              = static_cast<Dynamixel::Id>(get_parameter("tilt_servo_id").as_int());
 
-  std::vector<std::tuple<std::string, Dynamixel::Id>> const L3XZ_DYNAMIXEL_ID_VECT =
+  std::array<Dynamixel::Id, 8> const L3XZ_DYNAMIXEL_ID_ARRAY =
   {
-    std::make_tuple("left front coxa",   left_front_coxa_servo_id),
-    std::make_tuple("left middle coxa",  left_middle_coxa_servo_id),
-    std::make_tuple("left back coxa",    left_back_coxa_servo_id),
-    std::make_tuple("right front coxa",  right_front_coxa_servo_id),
-    std::make_tuple("right middle coxa", right_middle_coxa_servo_id),
-    std::make_tuple("right back coxa",   right_back_coxa_servo_id),
-    std::make_tuple("pan",               pan_servo_id),
+    left_front_coxa_servo_id,
+    left_middle_coxa_servo_id,
+    left_back_coxa_servo_id,
+    right_front_coxa_servo_id,
+    right_middle_coxa_servo_id,
+    right_back_coxa_servo_id,
+    pan_servo_id,
   };
 
-  for (auto [servo_str, servo_id] : L3XZ_DYNAMIXEL_ID_VECT)
-    if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [servo_id](Dynamixel::Id const id) { return (id == servo_id); }))
+  bool all_servos_online = true;
+  std::stringstream offline_id_list;
+  for (auto servo_id : L3XZ_DYNAMIXEL_ID_ARRAY)
+    if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [servo_id, &all_servos_online, &offline_id_list](Dynamixel::Id const id) { return (id == servo_id); }))
     {
-      RCLCPP_ERROR(get_logger(), "%s servo with configured id %d not online.", servo_str.c_str(), static_cast<int>(servo_id));
-      rclcpp::shutdown();
+      offline_id_list << static_cast<int>(servo_id) << " ";
+      all_servos_online = false;
     }
+  if (!all_servos_online) {
+    RCLCPP_ERROR(get_logger(), "one or more servos OFF-line{ %s}, shutting down.", offline_id_list.str().c_str());
+    rclcpp::shutdown();
+    return;
+  }
 
   /* Initialize pan/tilt head. */
   RCLCPP_INFO(get_logger(), "initialize pan/tilt servo.");
