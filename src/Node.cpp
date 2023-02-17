@@ -83,12 +83,22 @@ Node::Node()
     }
 
   /* Initialize pan/tilt head. */
-  RCLCPP_INFO(get_logger(), "initialize pan/tilt servo in position control mode and set to initial angle.");
+  RCLCPP_INFO(get_logger(), "initialize pan/tilt servo.");
   _mx28_head_sync_ctrl = std::make_shared<MX28AR::HeadSyncGroup>(dyn_ctrl, pan_servo_id, tilt_servo_id);
   init_pan_tilt_servos();
 
-  /* Configure subscribers and publishers. */
+  /* Initialize coxa servos. */
+  RCLCPP_INFO(get_logger(), "initialize all coxa servos.");
+  _mx28_coxa_sync_ctrl = std::make_shared<MX28AR::CoxaSyncGroup>(dyn_ctrl,
+                                                                 left_front_coxa_servo_id,
+                                                                 left_middle_coxa_servo_id,
+                                                                 left_back_coxa_servo_id,
+                                                                 right_front_coxa_servo_id,
+                                                                 right_middle_coxa_servo_id,
+                                                                 right_back_coxa_servo_id);
+  init_coxa_servos();
 
+  /* Configure subscribers and publishers. */
   _head_io_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>
     ("/l3xz/head/velocity/target", 1,
     [this](l3xz_ros_dynamixel_bridge::msg::HeadVelocity::SharedPtr const msg)
@@ -110,8 +120,10 @@ Node::Node()
 
 Node::~Node()
 {
-  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_head_sync_ctrl->setGoalVelocity(0.0, 0.0);
+  _mx28_head_sync_ctrl->setTorqueEnable(MX28AR::TorqueEnable::Off);
+
+  _mx28_coxa_sync_ctrl->setGoalVelocity(0.0);
 }
 
 /**************************************************************************************
@@ -254,6 +266,13 @@ void Node::init_pan_tilt_servos()
   _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
   _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
   _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
+}
+
+void Node::init_coxa_servos()
+{
+  _mx28_coxa_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_coxa_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+  _mx28_coxa_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 }
 
 /**************************************************************************************

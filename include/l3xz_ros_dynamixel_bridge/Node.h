@@ -45,6 +45,7 @@ private:
   rclcpp::TimerBase::SharedPtr _io_loop_timer;
 
   std::shared_ptr<MX28AR::HeadSyncGroup> _mx28_head_sync_ctrl;
+  std::shared_ptr<MX28AR::CoxaSyncGroup> _mx28_coxa_sync_ctrl;
 
   std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
@@ -52,6 +53,7 @@ private:
 
   void declare_parameter_all();
   void init_pan_tilt_servos();
+  void init_coxa_servos();
 };
 
 /**************************************************************************************
