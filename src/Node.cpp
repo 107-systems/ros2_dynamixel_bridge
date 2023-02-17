@@ -174,7 +174,7 @@ void Node::io_loop()
   /* Checking current head position and stopping if either
    * pan or tilt angle would exceed the maximum allowed angle.
    */
-  auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition();
+  auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition_head();
 
   if ((pan_angle_deg < get_parameter("pan_servo_min_angle").as_double()) && (pan_angular_velocity_dps < 0.0f))
     pan_goal_velocity_rpm = 0.0f;
@@ -251,7 +251,7 @@ void Node::init_pan_tilt_servos()
   {
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition();
+    auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition_head();
 
     actual_pan_angle_deg  = pan_angle_deg;
     actual_tilt_angle_deg = tilt_angle_deg;

@@ -44,7 +44,7 @@ public:
   void setGoalPosition (std::vector<float> const & angle_deg_vect);
   void setGoalVelocity (std::vector<float> const & velocity_rpm_vect);
 
-  std::tuple<float, float> getPresentPosition();
+  std::vector<float> getPresentPosition();
 };
 
 class HeadSyncGroup : public SyncGroup
@@ -63,6 +63,13 @@ public:
   void setGoalVelocity(float const pan_velocity_rpm, float const tilt_velocity_rpm)
   {
     SyncGroup::setGoalVelocity(std::vector<float>{pan_velocity_rpm, tilt_velocity_rpm});
+  }
+  std::tuple<float, float> getPresentPosition_head()
+  {
+    std::vector<float> const head_angle_vect = getPresentPosition();
+    float const pan_angle_deg  = head_angle_vect.at(0);
+    float const tilt_angle_deg = head_angle_vect.at(1);
+    return std::make_tuple(pan_angle_deg, tilt_angle_deg);
   }
 };
 
