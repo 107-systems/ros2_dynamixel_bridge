@@ -51,6 +51,7 @@ private:
   void io_loop();
 
   void declare_parameter_all();
+  void init_pan_tilt_servos();
 };
 
 /**************************************************************************************

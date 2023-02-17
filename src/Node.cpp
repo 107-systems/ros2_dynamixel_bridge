@@ -55,68 +55,37 @@ Node::Node()
     dyn_id_list << static_cast<int>(id) << " ";
   RCLCPP_INFO(get_logger(), "detected Dynamixel MX-28AR: { %s}.", dyn_id_list.str().c_str());
 
-  Dynamixel::Id const pan_servo_id  = static_cast<Dynamixel::Id>(get_parameter("pan_servo_id").as_int());
-  Dynamixel::Id const tilt_servo_id = static_cast<Dynamixel::Id>(get_parameter("tilt_servo_id").as_int());
+  Dynamixel::Id const left_front_coxa_servo_id   = static_cast<Dynamixel::Id>(get_parameter("left_front_coxa_servo_id").as_int());
+  Dynamixel::Id const left_middle_coxa_servo_id  = static_cast<Dynamixel::Id>(get_parameter("left_middle_coxa_servo_id").as_int());
+  Dynamixel::Id const left_back_coxa_servo_id    = static_cast<Dynamixel::Id>(get_parameter("left_back_coxa_servo_id").as_int());
+  Dynamixel::Id const right_front_coxa_servo_id  = static_cast<Dynamixel::Id>(get_parameter("right_front_coxa_servo_id").as_int());
+  Dynamixel::Id const right_middle_coxa_servo_id = static_cast<Dynamixel::Id>(get_parameter("right_middle_coxa_servo_id").as_int());
+  Dynamixel::Id const right_back_coxa_servo_id   = static_cast<Dynamixel::Id>(get_parameter("right_back_coxa_servo_id").as_int());
+  Dynamixel::Id const pan_servo_id               = static_cast<Dynamixel::Id>(get_parameter("pan_servo_id").as_int());
+  Dynamixel::Id const tilt_servo_id              = static_cast<Dynamixel::Id>(get_parameter("tilt_servo_id").as_int());
 
-  if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [pan_servo_id](Dynamixel::Id const id) { return (id == pan_servo_id); })) {
-    RCLCPP_ERROR(get_logger(), "pan servo with configured id %d not online.", static_cast<int>(pan_servo_id));
-    rclcpp::shutdown();
-  }
+  std::vector<std::tuple<std::string, Dynamixel::Id>> const L3XZ_DYNAMIXEL_ID_VECT =
+  {
+    std::make_tuple("left front coxa",   left_front_coxa_servo_id),
+    std::make_tuple("left middle coxa",  left_middle_coxa_servo_id),
+    std::make_tuple("left back coxa",    left_back_coxa_servo_id),
+    std::make_tuple("right front coxa",  right_front_coxa_servo_id),
+    std::make_tuple("right middle coxa", right_middle_coxa_servo_id),
+    std::make_tuple("right back coxa",   right_back_coxa_servo_id),
+    std::make_tuple("pan",               pan_servo_id),
+  };
 
-  if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [tilt_servo_id](Dynamixel::Id const id) { return (id == tilt_servo_id); })) {
-    RCLCPP_ERROR(get_logger(), "tilt servo with configured id %d not online.", static_cast<int>(tilt_servo_id));
-    rclcpp::shutdown();
-  }
+  for (auto [servo_str, servo_id] : L3XZ_DYNAMIXEL_ID_VECT)
+    if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [servo_id](Dynamixel::Id const id) { return (id == servo_id); }))
+    {
+      RCLCPP_ERROR(get_logger(), "%s servo with configured id %d not online.", servo_str.c_str(), static_cast<int>(servo_id));
+      rclcpp::shutdown();
+    }
 
-  RCLCPP_INFO(get_logger(), "initialize pan/servo in position control mode and set to initial angle.");
-
-  /* Instantiate MX-28AR controller and continue with pan/tilt head initialization. */
+  /* Initialize pan/tilt head. */
+  RCLCPP_INFO(get_logger(), "initialize pan/tilt servo in position control mode and set to initial angle.");
   _mx28_head_sync_ctrl = std::make_shared<MX28AR::HeadSyncGroup>(dyn_ctrl, pan_servo_id, tilt_servo_id);
-
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-  _mx28_head_sync_ctrl->setGoalPosition (get_parameter("pan_servo_initial_angle").as_double(), get_parameter("tilt_servo_initial_angle").as_double());
-
-  bool pan_target_reached = false, tilt_target_reached = false;
-  float actual_pan_angle_deg = 0.0f, actual_tilt_angle_deg = 0.0f;
-  for (auto const start = std::chrono::system_clock::now();
-       (std::chrono::system_clock::now() - start) < std::chrono::seconds(5) && !pan_target_reached && !tilt_target_reached; )
-  {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
-    auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition();
-
-    actual_pan_angle_deg  = pan_angle_deg;
-    actual_tilt_angle_deg = tilt_angle_deg;
-
-    static float constexpr INITIAL_ANGLE_EPSILON_deg = 2.0f;
-    pan_target_reached  = fabs(actual_pan_angle_deg  - get_parameter("pan_servo_initial_angle").as_double())  < INITIAL_ANGLE_EPSILON_deg;
-    tilt_target_reached = fabs(actual_tilt_angle_deg - get_parameter("tilt_servo_initial_angle").as_double()) < INITIAL_ANGLE_EPSILON_deg;
-  }
-
-  if (!pan_target_reached)
-  {
-    RCLCPP_ERROR(get_logger(),
-                 "could not reach initial position for pan servo, target: %0.2f, actual: %0.2f.",
-                 get_parameter("pan_servo_initial_angle").as_double(),
-                 actual_pan_angle_deg);
-    rclcpp::shutdown();
-  }
-
-  if (!tilt_target_reached)
-  {
-    RCLCPP_ERROR(get_logger(),
-                 "could not reach initial position for tilt servo, target: %0.2f, actual: %0.2f.",
-                 get_parameter("tilt_servo_initial_angle").as_double(),
-                 actual_tilt_angle_deg);
-    rclcpp::shutdown();
-  }
-
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
+  init_pan_tilt_servos();
 
   /* Configure subscribers and publishers. */
 
@@ -237,6 +206,54 @@ void Node::declare_parameter_all()
   declare_parameter("tilt_servo_initial_angle", 180.0f);
   declare_parameter("tilt_servo_min_angle", 170.0f);
   declare_parameter("tilt_servo_max_angle", 190.0f);
+}
+
+void Node::init_pan_tilt_servos()
+{
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+  _mx28_head_sync_ctrl->setGoalPosition (get_parameter("pan_servo_initial_angle").as_double(), get_parameter("tilt_servo_initial_angle").as_double());
+
+  bool pan_target_reached = false, tilt_target_reached = false;
+  float actual_pan_angle_deg = 0.0f, actual_tilt_angle_deg = 0.0f;
+  for (auto const start = std::chrono::system_clock::now();
+       (std::chrono::system_clock::now() - start) < std::chrono::seconds(5) && !pan_target_reached && !tilt_target_reached; )
+  {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition();
+
+    actual_pan_angle_deg  = pan_angle_deg;
+    actual_tilt_angle_deg = tilt_angle_deg;
+
+    static float constexpr INITIAL_ANGLE_EPSILON_deg = 2.0f;
+    pan_target_reached  = fabs(actual_pan_angle_deg  - get_parameter("pan_servo_initial_angle").as_double())  < INITIAL_ANGLE_EPSILON_deg;
+    tilt_target_reached = fabs(actual_tilt_angle_deg - get_parameter("tilt_servo_initial_angle").as_double()) < INITIAL_ANGLE_EPSILON_deg;
+  }
+
+  if (!pan_target_reached)
+  {
+    RCLCPP_ERROR(get_logger(),
+                 "could not reach initial position for pan servo, target: %0.2f, actual: %0.2f.",
+                 get_parameter("pan_servo_initial_angle").as_double(),
+                 actual_pan_angle_deg);
+    rclcpp::shutdown();
+  }
+
+  if (!tilt_target_reached)
+  {
+    RCLCPP_ERROR(get_logger(),
+                 "could not reach initial position for tilt servo, target: %0.2f, actual: %0.2f.",
+                 get_parameter("tilt_servo_initial_angle").as_double(),
+                 actual_tilt_angle_deg);
+    rclcpp::shutdown();
+  }
+
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
+  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
 }
 
 /**************************************************************************************
