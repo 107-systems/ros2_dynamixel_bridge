@@ -18,7 +18,8 @@
 
 #include <dynamixel++/dynamixel++.h>
 
-#include <l3xz_ros_dynamixel_bridge/msg/coxa_angle.hpp>
+#include <std_msgs/msg/float32.hpp>
+
 #include <l3xz_ros_dynamixel_bridge/msg/head_velocity.hpp>
 
 #include "MX28ARSyncGroup.h"
@@ -41,11 +42,23 @@ public:
   ~Node();
 
 private:
+  enum class Servo
+  {
+    Coxa_Left_Front,
+    Coxa_Left_Middle,
+    Coxa_Left_Back,
+    Coxa_Right_Front,
+    Coxa_Right_Middle,
+    Coxa_Right_Back,
+    Pan,
+    Tilt,
+  };
+
+  std::map<Servo,
+           rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_pub;
+
   l3xz_ros_dynamixel_bridge::msg::HeadVelocity _head_vel_msg;
   rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>::SharedPtr _head_vel_sub;
-
-  l3xz_ros_dynamixel_bridge::msg::CoxaAngle _coxa_angle_msg;
-  rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::CoxaAngle>::SharedPtr _coxa_angle_sub;
 
   std::shared_ptr<MX28AR::HeadSyncGroup> _mx28_head_sync_ctrl;
   std::shared_ptr<MX28AR::CoxaSyncGroup> _mx28_coxa_sync_ctrl;
