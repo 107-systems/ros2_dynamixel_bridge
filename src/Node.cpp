@@ -162,6 +162,7 @@ void Node::io_loop()
 
   /* Retrieve the current position and publish it. ************************************/
   auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition_head();
+  auto const coxa_angle_deg_map = _mx28_coxa_sync_ctrl->getPresentPosition_coxa();
 
   auto publishServoAngle = [](rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr const pub, float const angle_deg)
   {
@@ -169,8 +170,15 @@ void Node::io_loop()
     msg.data = angle_deg;
     pub->publish(msg);
   };
-  publishServoAngle(_angle_pub[Servo::Pan], pan_angle_deg);
-  publishServoAngle(_angle_pub[Servo::Tilt], tilt_angle_deg);
+
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Front),   coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Left_Front));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Middle),  coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Left_Middle));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Back),    coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Left_Back));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Front),  coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Right_Front));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Middle), coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Right_Middle));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Back),   coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Right_Back));
+  publishServoAngle(_angle_pub.at(Servo::Pan),               pan_angle_deg);
+  publishServoAngle(_angle_pub.at(Servo::Tilt),              tilt_angle_deg);
 
 
   /* Control the head. ****************************************************************/

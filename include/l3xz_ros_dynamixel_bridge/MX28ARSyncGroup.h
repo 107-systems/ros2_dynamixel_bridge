@@ -116,7 +116,7 @@ public:
     setGoalPosition(coxa_angle_deg_map);
   }
 
-  void setGoalVelocity(std::map<CoxaId, float /* velocity_rpm*/> const & coxa_velocity_rpm_map)
+  void setGoalVelocity(std::map<CoxaId, float /* velocity_rpm */> const & coxa_velocity_rpm_map)
   {
     std::vector<float> coxa_velocity_rpm_vect;
 
@@ -135,6 +135,23 @@ public:
     for(auto id : COXA_ID_ARRAY)
       coxa_velocity_rpm_map[id] = coxa_velocity_rpm;
     setGoalVelocity(coxa_velocity_rpm_map);
+  }
+  std::map<CoxaId, float /* angle_deg */> getPresentPosition_coxa()
+  {
+    std::vector<float> const coxa_angle_vect = getPresentPosition();
+
+    std::map<CoxaId, float> const coxa_angle_map =
+    {
+      {CoxaId::Left_Front,   coxa_angle_vect.at(0)},
+      {CoxaId::Left_Middle,  coxa_angle_vect.at(1)},
+      {CoxaId::Left_Back,    coxa_angle_vect.at(2)},
+      {CoxaId::Right_Front,  coxa_angle_vect.at(3)},
+      {CoxaId::Right_Middle, coxa_angle_vect.at(4)},
+      {CoxaId::Right_Back,   coxa_angle_vect.at(5)},
+
+    };
+
+    return coxa_angle_map;
   }
 };
 
