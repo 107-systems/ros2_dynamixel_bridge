@@ -28,6 +28,7 @@ colcon_ws$ ros2 launch l3xz_ros_dynamixel_bridge bridge.py
 | Default name | Type |
 |:-:|:-:|
 | `/l3xz/head/velocity/target` | [`HeadVelocity`](msg/HeadVelocity.msg) |
+| `/l3xz/coxa/angle/target` | [`CoxaAngle`](msg/CoxaAngle.msg) |
 
 ##### Parameters
 | Name | Default | Description |

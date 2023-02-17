@@ -35,6 +35,20 @@ Node::Node()
     return msg;
   } ()
 }
+, _coxa_angle_msg
+{
+  []()
+  {
+    l3xz_ros_dynamixel_bridge::msg::CoxaAngle msg;
+    msg.left_front_angle_deg = 0.0f;
+    msg.left_middle_angle_deg = 0.0f;
+    msg.left_back_angle_deg = 0.0f;
+    msg.right_front_angle_deg = 0.0f;
+    msg.right_middle_angle_deg = 0.0f;
+    msg.right_back_angle_deg = 0.0f;
+    return msg;
+  } ()
+}
 , _prev_io_loop_timepoint{std::chrono::steady_clock::now()}
 {
   declare_parameter_all();
@@ -99,12 +113,19 @@ Node::Node()
   init_coxa_servos();
 
   /* Configure subscribers and publishers. */
-  _head_io_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>
+  _head_vel_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>
     ("/l3xz/head/velocity/target", 1,
     [this](l3xz_ros_dynamixel_bridge::msg::HeadVelocity::SharedPtr const msg)
     {
       _head_vel_msg = *msg;
     });
+
+  _coxa_angle_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::CoxaAngle>
+    ("/l3xz/coxa/angle/target", 1,
+     [this](l3xz_ros_dynamixel_bridge::msg::CoxaAngle::SharedPtr const msg)
+     {
+       _coxa_angle_msg = *msg;
+     });
 
   /* Configure periodic control loop function. */
 

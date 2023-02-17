@@ -18,6 +18,7 @@
 
 #include <dynamixel++/dynamixel++.h>
 
+#include <l3xz_ros_dynamixel_bridge/msg/coxa_angle.hpp>
 #include <l3xz_ros_dynamixel_bridge/msg/head_velocity.hpp>
 
 #include "MX28ARSyncGroup.h"
@@ -41,14 +42,17 @@ public:
 
 private:
   l3xz_ros_dynamixel_bridge::msg::HeadVelocity _head_vel_msg;
-  rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>::SharedPtr _head_io_sub;
-  rclcpp::TimerBase::SharedPtr _io_loop_timer;
+  rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>::SharedPtr _head_vel_sub;
+
+  l3xz_ros_dynamixel_bridge::msg::CoxaAngle _coxa_angle_msg;
+  rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::CoxaAngle>::SharedPtr _coxa_angle_sub;
 
   std::shared_ptr<MX28AR::HeadSyncGroup> _mx28_head_sync_ctrl;
   std::shared_ptr<MX28AR::CoxaSyncGroup> _mx28_coxa_sync_ctrl;
 
   std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
+  rclcpp::TimerBase::SharedPtr _io_loop_timer;
   void io_loop();
 
   void declare_parameter_all();
