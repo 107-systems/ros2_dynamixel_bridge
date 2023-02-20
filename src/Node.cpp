@@ -310,10 +310,19 @@ void Node::io_loop()
   target_velocity_rpm_map[Servo::Pan]  = _target_angular_velocity_dps[Servo::Pan]  / DPS_per_RPM;
   target_velocity_rpm_map[Servo::Tilt] = _target_angular_velocity_dps[Servo::Tilt] / DPS_per_RPM;
 
+  /* Checking if the target velocity exceeds the configured deadzone.
+   * Only then we should actually write a value != 0 to the servos,
+   * otherwise very slow drift can occur.
+   */
+  static float constexpr DEADZONE_RPM = 1.0f;
+  if (fabs(target_velocity_rpm_map[Servo::Pan]) < DEADZONE_RPM)
+    target_velocity_rpm_map[Servo::Pan] = 0.0f;
+  if (fabs(target_velocity_rpm_map[Servo::Tilt]) < DEADZONE_RPM)
+    target_velocity_rpm_map[Servo::Tilt] = 0.0f;
+
   /* Checking current head position and stopping if either
    * pan or tilt angle would exceed the maximum allowed angle.
    */
-
   if ((actual_angle_deg_map.at(Servo::Pan) < get_parameter("pan_servo_min_angle").as_double()) && (_target_angular_velocity_dps[Servo::Pan] < 0.0f))
     target_velocity_rpm_map[Servo::Pan] = 0.0f;
   if ((actual_angle_deg_map.at(Servo::Pan) > get_parameter("pan_servo_max_angle").as_double()) && (_target_angular_velocity_dps[Servo::Pan] > 0.0f))
