@@ -47,6 +47,29 @@ void Single::setGoalPosition(float const angle_deg)
   _dyn_ctrl->write(static_cast<uint16_t>(ControlTable::GoalPosition), _id, angle_raw);
 }
 
+void Single::setGoalVelocity(float const velocity_rpm)
+{
+  static float const RPM_per_LSB = 0.229f;
+  static float const MAX_VELOCITY_rpm = RPM_per_LSB * 1023.0f;
+  static float const MIN_VELOCITY_rpm = RPM_per_LSB * 1023.0f * (-1.0);
+
+  auto limit_velocity = [](float const rpm)
+  {
+    if      (rpm < MIN_VELOCITY_rpm) return MIN_VELOCITY_rpm;
+    else if (rpm > MAX_VELOCITY_rpm) return MAX_VELOCITY_rpm;
+    else                             return rpm;
+  };
+
+  auto toRegValue = [](float const rpm)
+  {
+    int32_t const rpm_lsb_signed = static_cast<int32_t>(rpm / RPM_per_LSB);
+    return static_cast<uint32_t>(rpm_lsb_signed);
+  };
+
+  uint32_t const raw_goal_velocity = toRegValue(limit_velocity(velocity_rpm)); ;
+  _dyn_ctrl->write(static_cast<uint16_t>(ControlTable::GoalVelocity), _id, raw_goal_velocity);
+}
+
 float Single::getPresentPosition()
 {
   uint32_t const angle_raw = _dyn_ctrl->read<uint32_t>(static_cast<uint16_t>(ControlTable::PresentPosition), _id);

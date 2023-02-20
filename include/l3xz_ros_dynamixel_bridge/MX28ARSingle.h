@@ -37,6 +37,7 @@ public:
   void  setTorqueEnable   (TorqueEnable const torque_enable);
   void  setOperatingMode  (OperatingMode const operating_mode);
   void  setGoalPosition   (float const angle_deg);
+  void  setGoalVelocity   (float const velocity_rpm);
   float getPresentPosition();
 
 

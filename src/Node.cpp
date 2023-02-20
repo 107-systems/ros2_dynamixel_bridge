@@ -91,6 +91,56 @@ Node::Node()
     return;
   }
 
+  /* Create a map for individually controlling all the servos. */
+  _mx28_ctrl_map[Servo::Coxa_Left_Front]   = std::make_shared<MX28AR::Single>(dyn_ctrl, left_front_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Left_Middle]  = std::make_shared<MX28AR::Single>(dyn_ctrl, left_middle_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Left_Back]    = std::make_shared<MX28AR::Single>(dyn_ctrl, left_back_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Right_Front]  = std::make_shared<MX28AR::Single>(dyn_ctrl, right_front_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Right_Middle] = std::make_shared<MX28AR::Single>(dyn_ctrl, right_middle_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Right_Back]   = std::make_shared<MX28AR::Single>(dyn_ctrl, right_back_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Pan]               = std::make_shared<MX28AR::Single>(dyn_ctrl, pan_servo_id);
+  _mx28_ctrl_map[Servo::Tilt]              = std::make_shared<MX28AR::Single>(dyn_ctrl, tilt_servo_id);
+
+  for (auto [servo, servo_ctrl] : _mx28_ctrl_map)
+  {
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+    servo_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+
+    /* TODO: REMOVE IF */
+    if (servo == Servo::Pan || servo == Servo::Tilt)
+    {
+      servo_ctrl->setGoalPosition(get_parameter("pan_servo_initial_angle").as_double());
+
+      bool target_angle_reached = false;
+      float actual_angle_deg = 0.0f;
+      for (auto const start = std::chrono::system_clock::now();
+           (std::chrono::system_clock::now() - start) < std::chrono::seconds(5) && !target_angle_reached; )
+      {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        actual_angle_deg = servo_ctrl->getPresentPosition();
+
+        static float constexpr INITIAL_ANGLE_EPSILON_deg = 2.0f;
+        target_angle_reached  = fabs(actual_angle_deg  - get_parameter("pan_servo_initial_angle").as_double())  < INITIAL_ANGLE_EPSILON_deg;
+      }
+
+      if (!target_angle_reached)
+      {
+        RCLCPP_ERROR(get_logger(),
+                     "could not reach initial position for servo #id, target: %0.2f, actual: %0.2f.",
+                     get_parameter("pan_servo_initial_angle").as_double(),
+                     actual_angle_deg);
+        rclcpp::shutdown();
+      }
+    }
+
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+    servo_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+    servo_ctrl->setGoalVelocity (0.0f);
+  }
+
   /* Create sync group consisting of all dynamixel servos. */
   _mx28_sync_ctrl = std::make_shared<MX28AR::SyncGroup>(
     dyn_ctrl,
@@ -102,22 +152,6 @@ Node::Node()
                                          right_back_coxa_servo_id,
                                          pan_servo_id,
                                          tilt_servo_id});
-
-  /* Initialize pan/tilt head. */
-  RCLCPP_INFO(get_logger(), "initialize pan/tilt servo.");
-  _mx28_head_sync_ctrl = std::make_shared<MX28AR::HeadSyncGroup>(dyn_ctrl, pan_servo_id, tilt_servo_id);
-  init_pan_tilt_servos();
-
-  /* Initialize coxa servos. */
-  RCLCPP_INFO(get_logger(), "initialize all coxa servos.");
-  _mx28_coxa_sync_ctrl = std::make_shared<MX28AR::CoxaSyncGroup>(dyn_ctrl,
-                                                                 left_front_coxa_servo_id,
-                                                                 left_middle_coxa_servo_id,
-                                                                 left_back_coxa_servo_id,
-                                                                 right_front_coxa_servo_id,
-                                                                 right_middle_coxa_servo_id,
-                                                                 right_back_coxa_servo_id);
-  init_coxa_servos();
 
   /* Configure subscribers and publishers. */
   _angle_pub[Servo::Coxa_Left_Front]       = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/left_front/coxa/angle/actual", 1);
@@ -183,10 +217,7 @@ Node::Node()
 
 Node::~Node()
 {
-  _mx28_head_sync_ctrl->setGoalVelocity(0.0, 0.0);
-  _mx28_head_sync_ctrl->setTorqueEnable(MX28AR::TorqueEnable::Off);
-
-  _mx28_coxa_sync_ctrl->setGoalVelocity(0.0);
+  _mx28_sync_ctrl->setGoalVelocity(std::vector<float>{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
 }
 
 /**************************************************************************************
@@ -328,61 +359,6 @@ void Node::declare_parameter_all()
   declare_parameter("tilt_servo_initial_angle", 180.0f);
   declare_parameter("tilt_servo_min_angle", 170.0f);
   declare_parameter("tilt_servo_max_angle", 190.0f);
-}
-
-void Node::init_pan_tilt_servos()
-{
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-  _mx28_head_sync_ctrl->setGoalPosition (get_parameter("pan_servo_initial_angle").as_double(), get_parameter("tilt_servo_initial_angle").as_double());
-
-  bool pan_target_reached = false, tilt_target_reached = false;
-  float actual_pan_angle_deg = 0.0f, actual_tilt_angle_deg = 0.0f;
-  for (auto const start = std::chrono::system_clock::now();
-       (std::chrono::system_clock::now() - start) < std::chrono::seconds(5) && !pan_target_reached && !tilt_target_reached; )
-  {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
-    auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition_head();
-
-    actual_pan_angle_deg  = pan_angle_deg;
-    actual_tilt_angle_deg = tilt_angle_deg;
-
-    static float constexpr INITIAL_ANGLE_EPSILON_deg = 2.0f;
-    pan_target_reached  = fabs(actual_pan_angle_deg  - get_parameter("pan_servo_initial_angle").as_double())  < INITIAL_ANGLE_EPSILON_deg;
-    tilt_target_reached = fabs(actual_tilt_angle_deg - get_parameter("tilt_servo_initial_angle").as_double()) < INITIAL_ANGLE_EPSILON_deg;
-  }
-
-  if (!pan_target_reached)
-  {
-    RCLCPP_ERROR(get_logger(),
-                 "could not reach initial position for pan servo, target: %0.2f, actual: %0.2f.",
-                 get_parameter("pan_servo_initial_angle").as_double(),
-                 actual_pan_angle_deg);
-    rclcpp::shutdown();
-  }
-
-  if (!tilt_target_reached)
-  {
-    RCLCPP_ERROR(get_logger(),
-                 "could not reach initial position for tilt servo, target: %0.2f, actual: %0.2f.",
-                 get_parameter("tilt_servo_initial_angle").as_double(),
-                 actual_tilt_angle_deg);
-    rclcpp::shutdown();
-  }
-
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_head_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
-  _mx28_head_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-  _mx28_head_sync_ctrl->setGoalVelocity (0.0, 0.0);
-}
-
-void Node::init_coxa_servos()
-{
-  _mx28_coxa_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_coxa_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
-  _mx28_coxa_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 }
 
 /**************************************************************************************
