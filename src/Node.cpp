@@ -234,7 +234,7 @@ void Node::io_loop()
   if (io_loop_rate > (IO_LOOP_RATE + std::chrono::milliseconds(1)))
     RCLCPP_WARN_THROTTLE(get_logger(),
                          *get_clock(),
-                         1000,
+                         10*1000UL, /* 10 sec. */
                          "io_loop should be called every %ld ms, but is %ld ms instead",
                          IO_LOOP_RATE.count(),
                          std::chrono::duration_cast<std::chrono::milliseconds>(io_loop_rate).count());
