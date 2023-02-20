@@ -7,7 +7,6 @@ set(L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET ${PROJECT_NAME}_node)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 #######################################################################################
 add_subdirectory(external/libdynamixelplusplus)
 #######################################################################################
@@ -30,12 +29,6 @@ target_compile_features(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} PRIVATE cxx_std_17)
 target_link_libraries(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} dynamixel++)
 #######################################################################################
 ament_target_dependencies(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} rclcpp std_msgs)
-#######################################################################################
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/HeadVelocity.msg"
-)
-#######################################################################################
-rosidl_target_interfaces(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} ${PROJECT_NAME} "rosidl_typesupport_cpp")
 #######################################################################################
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

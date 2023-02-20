@@ -25,15 +25,16 @@ using namespace dynamixelplusplus;
 
 Node::Node()
 : rclcpp::Node("l3xz_ros_dynamixel_bridge")
-, _head_vel_msg
+, _target_angular_velocity_dps
 {
-  []()
-  {
-    l3xz_ros_dynamixel_bridge::msg::HeadVelocity msg;
-    msg.pan_vel_rad_per_sec = 0.0f;
-    msg.tilt_vel_rad_per_sec = 0.0f;
-    return msg;
-  } ()
+  {Servo::Coxa_Left_Front,   0.0f},
+  {Servo::Coxa_Left_Middle,  0.0f},
+  {Servo::Coxa_Left_Back,    0.0f},
+  {Servo::Coxa_Right_Front,  0.0f},
+  {Servo::Coxa_Right_Middle, 0.0f},
+  {Servo::Coxa_Right_Back,   0.0f},
+  {Servo::Pan,               0.0f},
+  {Servo::Tilt,              0.0f},
 }
 , _prev_io_loop_timepoint{std::chrono::steady_clock::now()}
 {
@@ -90,6 +91,18 @@ Node::Node()
     return;
   }
 
+  /* Create sync group consisting of all dynamixel servos. */
+  _mx28_sync_ctrl = std::make_shared<MX28AR::SyncGroup>(
+    dyn_ctrl,
+    dynamixelplusplus::Dynamixel::IdVect{left_front_coxa_servo_id,
+                                         left_middle_coxa_servo_id,
+                                         left_back_coxa_servo_id,
+                                         right_front_coxa_servo_id,
+                                         right_middle_coxa_servo_id,
+                                         right_back_coxa_servo_id,
+                                         pan_servo_id,
+                                         tilt_servo_id});
+
   /* Initialize pan/tilt head. */
   RCLCPP_INFO(get_logger(), "initialize pan/tilt servo.");
   _mx28_head_sync_ctrl = std::make_shared<MX28AR::HeadSyncGroup>(dyn_ctrl, pan_servo_id, tilt_servo_id);
@@ -107,24 +120,57 @@ Node::Node()
   init_coxa_servos();
 
   /* Configure subscribers and publishers. */
-  _angle_pub[Servo::Coxa_Left_Front]   = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/left_front/coxa/angle/actual", 1);
-  _angle_pub[Servo::Coxa_Left_Middle]  = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/left_middle/coxa/angle/actual", 1);
-  _angle_pub[Servo::Coxa_Left_Back]    = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/left_back/coxa/angle/actual", 1);
-  _angle_pub[Servo::Coxa_Right_Front]  = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/right_front/coxa/angle/actual", 1);
-  _angle_pub[Servo::Coxa_Right_Middle] = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/right_middle/coxa/angle/actual", 1);
-  _angle_pub[Servo::Coxa_Right_Back]   = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/right_back/coxa/angle/actual", 1);
-  _angle_pub[Servo::Pan]               = create_publisher<std_msgs::msg::Float32>("/l3xz/head/pan/angle/actual", 1);
-  _angle_pub[Servo::Tilt]              = create_publisher<std_msgs::msg::Float32>("/l3xz/head/pan/angle/actual", 1);
+  _angle_pub[Servo::Coxa_Left_Front]       = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/left_front/coxa/angle/actual", 1);
+  _angle_pub[Servo::Coxa_Left_Middle]      = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/left_middle/coxa/angle/actual", 1);
+  _angle_pub[Servo::Coxa_Left_Back]        = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/left_back/coxa/angle/actual", 1);
+  _angle_pub[Servo::Coxa_Right_Front]      = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/right_front/coxa/angle/actual", 1);
+  _angle_pub[Servo::Coxa_Right_Middle]     = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/right_middle/coxa/angle/actual", 1);
+  _angle_pub[Servo::Coxa_Right_Back]       = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/right_back/coxa/angle/actual", 1);
+  _angle_pub[Servo::Pan]                   = create_publisher<std_msgs::msg::Float32>("/l3xz/head/pan/angle/actual", 1);
+  _angle_pub[Servo::Tilt]                  = create_publisher<std_msgs::msg::Float32>("/l3xz/head/pan/angle/actual", 1);
 
-    _head_vel_sub = create_subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>
-    ("/l3xz/head/velocity/target", 1,
-    [this](l3xz_ros_dynamixel_bridge::msg::HeadVelocity::SharedPtr const msg)
-    {
-      _head_vel_msg = *msg;
-    });
+  _angle_vel_sub[Servo::Coxa_Left_Front]   = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/left_front/coxa/angle_velocity/target", 1,
+                                                                                         [this](std_msgs::msg::Float32::SharedPtr const msg)
+                                                                                         {
+                                                                                           _target_angular_velocity_dps[Servo::Coxa_Left_Front] = msg->data * 180.0f / M_PI;
+                                                                                         });
+  _angle_vel_sub[Servo::Coxa_Left_Middle]  = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/left_middle/coxa/angle_velocity/target", 1,
+                                                                                         [this](std_msgs::msg::Float32::SharedPtr const msg)
+                                                                                         {
+                                                                                           _target_angular_velocity_dps[Servo::Coxa_Left_Middle] = msg->data * 180.0f / M_PI;
+                                                                                         });
+  _angle_vel_sub[Servo::Coxa_Left_Back]    = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/left_back/coxa/angle_velocity/target", 1,
+                                                                                         [this](std_msgs::msg::Float32::SharedPtr const msg)
+                                                                                         {
+                                                                                           _target_angular_velocity_dps[Servo::Coxa_Left_Back] = msg->data * 180.0f / M_PI;
+                                                                                         });
+  _angle_vel_sub[Servo::Coxa_Right_Front]  = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/right_front/coxa/angle_velocity/target", 1,
+                                                                                         [this](std_msgs::msg::Float32::SharedPtr const msg)
+                                                                                         {
+                                                                                           _target_angular_velocity_dps[Servo::Coxa_Right_Front] = msg->data * 180.0f / M_PI;
+                                                                                         });
+  _angle_vel_sub[Servo::Coxa_Right_Middle] = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/right_middle/coxa/angle_velocity/target", 1,
+                                                                                         [this](std_msgs::msg::Float32::SharedPtr const msg)
+                                                                                         {
+                                                                                           _target_angular_velocity_dps[Servo::Coxa_Right_Middle] = msg->data * 180.0f / M_PI;
+                                                                                         });
+  _angle_vel_sub[Servo::Coxa_Right_Back]   = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/right_back/coxa/angle_velocity/target", 1,
+                                                                                         [this](std_msgs::msg::Float32::SharedPtr const msg)
+                                                                                         {
+                                                                                           _target_angular_velocity_dps[Servo::Coxa_Right_Back] = msg->data * 180.0f / M_PI;
+                                                                                         });
+  _angle_vel_sub[Servo::Pan]               = create_subscription<std_msgs::msg::Float32>("/l3xz/head/pan/angle_velocity/target", 1,
+                                                                                         [this](std_msgs::msg::Float32::SharedPtr const msg)
+                                                                                         {
+                                                                                           _target_angular_velocity_dps[Servo::Pan] = msg->data * 180.0f / M_PI;
+                                                                                         });
+  _angle_vel_sub[Servo::Tilt]              = create_subscription<std_msgs::msg::Float32>("/l3xz/head/pan/angle_velocity/target", 1,
+                                                                                         [this](std_msgs::msg::Float32::SharedPtr const msg)
+                                                                                         {
+                                                                                           _target_angular_velocity_dps[Servo::Tilt] = msg->data * 180.0f / M_PI;
+                                                                                         });
 
   /* Configure periodic control loop function. */
-
   _io_loop_timer = create_wall_timer
     (std::chrono::milliseconds(IO_LOOP_RATE.count()),
      [this]()
@@ -160,10 +206,21 @@ void Node::io_loop()
                          std::chrono::duration_cast<std::chrono::milliseconds>(io_loop_rate).count());
   _prev_io_loop_timepoint = now;
 
-  /* Retrieve the current position and publish it. ************************************/
-  auto [pan_angle_deg, tilt_angle_deg] = _mx28_head_sync_ctrl->getPresentPosition_head();
-  auto const coxa_angle_deg_map = _mx28_coxa_sync_ctrl->getPresentPosition_coxa();
+  /* Synchronously retrieve the current position of each servo. ***********************/
+  auto const actual_angle_deg_vect = _mx28_sync_ctrl->getPresentPosition();
+  std::map<Servo, float> const actual_angle_deg_map =
+  {
+    {Servo::Coxa_Left_Front,   actual_angle_deg_vect.at(0)},
+    {Servo::Coxa_Left_Middle,  actual_angle_deg_vect.at(1)},
+    {Servo::Coxa_Left_Back,    actual_angle_deg_vect.at(2)},
+    {Servo::Coxa_Right_Front,  actual_angle_deg_vect.at(3)},
+    {Servo::Coxa_Right_Middle, actual_angle_deg_vect.at(4)},
+    {Servo::Coxa_Right_Back,   actual_angle_deg_vect.at(5)},
+    {Servo::Pan,               actual_angle_deg_vect.at(6)},
+    {Servo::Tilt,              actual_angle_deg_vect.at(7)},
+  };
 
+  /* Publish the current position via various ROS topics (one per joint). *************/
   auto publishServoAngle = [](rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr const pub, float const angle_deg)
   {
     std_msgs::msg::Float32 msg;
@@ -171,44 +228,60 @@ void Node::io_loop()
     pub->publish(msg);
   };
 
-  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Front),   coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Left_Front));
-  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Middle),  coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Left_Middle));
-  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Back),    coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Left_Back));
-  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Front),  coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Right_Front));
-  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Middle), coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Right_Middle));
-  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Back),   coxa_angle_deg_map.at(MX28AR::CoxaSyncGroup::CoxaId::Right_Back));
-  publishServoAngle(_angle_pub.at(Servo::Pan),               pan_angle_deg);
-  publishServoAngle(_angle_pub.at(Servo::Tilt),              tilt_angle_deg);
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Front),   actual_angle_deg_map.at(Servo::Coxa_Left_Front));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Middle),  actual_angle_deg_map.at(Servo::Coxa_Left_Middle));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Left_Back),    actual_angle_deg_map.at(Servo::Coxa_Left_Back));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Front),  actual_angle_deg_map.at(Servo::Coxa_Right_Front));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Middle), actual_angle_deg_map.at(Servo::Coxa_Right_Middle));
+  publishServoAngle(_angle_pub.at(Servo::Coxa_Right_Back),   actual_angle_deg_map.at(Servo::Coxa_Right_Back));
+  publishServoAngle(_angle_pub.at(Servo::Pan),               actual_angle_deg_map.at(Servo::Pan));
+  publishServoAngle(_angle_pub.at(Servo::Tilt),              actual_angle_deg_map.at(Servo::Tilt));
 
-
-  /* Control the head. ****************************************************************/
-  float pan_goal_velocity_rpm = 0.0f,
-        tilt_goal_velocity_rpm = 0.0f;
-
-  float const pan_angular_velocity_dps  = _head_vel_msg.pan_vel_rad_per_sec  * 180.0f / M_PI;
-  float const tilt_angular_velocity_dps = _head_vel_msg.tilt_vel_rad_per_sec * 180.0f / M_PI;
+  /* Calculate RPMs and limit them for all servos. ************************************/
+  std::map<Servo, float> target_velocity_rpm_map =
+  {
+    {Servo::Coxa_Left_Front,   0.0f},
+    {Servo::Coxa_Left_Middle,  0.0f},
+    {Servo::Coxa_Left_Back,    0.0f},
+    {Servo::Coxa_Right_Front,  0.0f},
+    {Servo::Coxa_Right_Middle, 0.0f},
+    {Servo::Coxa_Right_Back,   0.0f},
+    {Servo::Pan,               0.0f},
+    {Servo::Tilt,              0.0f},
+  };
 
   static float constexpr DPS_per_RPM = 360.0f / 60.0f;
-  pan_goal_velocity_rpm  = pan_angular_velocity_dps  / DPS_per_RPM;
-  tilt_goal_velocity_rpm = tilt_angular_velocity_dps / DPS_per_RPM;
+  target_velocity_rpm_map[Servo::Pan]  = _target_angular_velocity_dps[Servo::Pan]  / DPS_per_RPM;
+  target_velocity_rpm_map[Servo::Tilt] = _target_angular_velocity_dps[Servo::Tilt] / DPS_per_RPM;
 
   /* Checking current head position and stopping if either
    * pan or tilt angle would exceed the maximum allowed angle.
    */
 
-  if ((pan_angle_deg < get_parameter("pan_servo_min_angle").as_double()) && (pan_angular_velocity_dps < 0.0f))
-    pan_goal_velocity_rpm = 0.0f;
-  if ((pan_angle_deg > get_parameter("pan_servo_max_angle").as_double()) && (pan_angular_velocity_dps > 0.0f))
-    pan_goal_velocity_rpm = 0.0f;
-  if ((tilt_angle_deg < get_parameter("tilt_servo_min_angle").as_double()) && (tilt_angular_velocity_dps < 0.0f))
-    tilt_goal_velocity_rpm = 0.0f;
-  if ((tilt_angle_deg > get_parameter("tilt_servo_max_angle").as_double()) && (tilt_angular_velocity_dps > 0.0f))
-    tilt_goal_velocity_rpm = 0.0f;
+  if ((actual_angle_deg_map.at(Servo::Pan) < get_parameter("pan_servo_min_angle").as_double()) && (_target_angular_velocity_dps[Servo::Pan] < 0.0f))
+    target_velocity_rpm_map[Servo::Pan] = 0.0f;
+  if ((actual_angle_deg_map.at(Servo::Pan) > get_parameter("pan_servo_max_angle").as_double()) && (_target_angular_velocity_dps[Servo::Pan] > 0.0f))
+    target_velocity_rpm_map[Servo::Pan] = 0.0f;
+  if ((actual_angle_deg_map.at(Servo::Tilt) < get_parameter("tilt_servo_min_angle").as_double()) && (_target_angular_velocity_dps[Servo::Tilt] < 0.0f))
+    target_velocity_rpm_map[Servo::Tilt] = 0.0f;
+  if ((actual_angle_deg_map.at(Servo::Tilt) > get_parameter("tilt_servo_max_angle").as_double()) && (_target_angular_velocity_dps[Servo::Tilt] > 0.0f))
+    target_velocity_rpm_map[Servo::Tilt] = 0.0f;
 
   /* Write the computed RPM value to the Dynamixel MX-28AR
    * servos of the pan/tilt head.
    */
-  _mx28_head_sync_ctrl->setGoalVelocity(pan_goal_velocity_rpm, tilt_goal_velocity_rpm);
+  std::vector<float> target_velocity_rpm_vect =
+  {
+    target_velocity_rpm_map.at(Servo::Coxa_Left_Front),
+    target_velocity_rpm_map.at(Servo::Coxa_Left_Middle),
+    target_velocity_rpm_map.at(Servo::Coxa_Left_Back),
+    target_velocity_rpm_map.at(Servo::Coxa_Right_Front),
+    target_velocity_rpm_map.at(Servo::Coxa_Right_Middle),
+    target_velocity_rpm_map.at(Servo::Coxa_Right_Back),
+    target_velocity_rpm_map.at(Servo::Pan),
+    target_velocity_rpm_map.at(Servo::Tilt),
+  };
+  _mx28_sync_ctrl->setGoalVelocity(target_velocity_rpm_vect);
 }
 
 void Node::declare_parameter_all()

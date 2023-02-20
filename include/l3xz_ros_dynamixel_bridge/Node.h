@@ -20,8 +20,6 @@
 
 #include <std_msgs/msg/float32.hpp>
 
-#include <l3xz_ros_dynamixel_bridge/msg/head_velocity.hpp>
-
 #include "MX28ARSyncGroup.h"
 
 /**************************************************************************************
@@ -54,12 +52,11 @@ private:
     Tilt,
   };
 
-  std::map<Servo,
-           rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_pub;
+  std::map<Servo, float> _target_angular_velocity_dps;
+  std::map<Servo, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_pub;
+  std::map<Servo, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_vel_sub;
 
-  l3xz_ros_dynamixel_bridge::msg::HeadVelocity _head_vel_msg;
-  rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>::SharedPtr _head_vel_sub;
-
+  std::shared_ptr<MX28AR::SyncGroup> _mx28_sync_ctrl;
   std::shared_ptr<MX28AR::HeadSyncGroup> _mx28_head_sync_ctrl;
   std::shared_ptr<MX28AR::CoxaSyncGroup> _mx28_coxa_sync_ctrl;
 
