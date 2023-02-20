@@ -12,7 +12,7 @@ def generate_launch_description():
       emulate_tty=True,
       parameters=[
           {'serial_port' : '/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT4NNZ55-if00-port0'},
-          {'serial_port_baudrate': 115200},
+          {'serial_port_baudrate': 2*1000*1000},
 
           {'left_front_coxa_servo_id': 1},
           {'left_front_coxa_servo_initial_angle': 180.0},

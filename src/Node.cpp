@@ -364,7 +364,7 @@ void Node::io_loop()
 void Node::declare_parameter_all()
 {
   declare_parameter("serial_port", "/dev/ttyUSB0");
-  declare_parameter("serial_port_baudrate", 115200);
+  declare_parameter("serial_port_baudrate", (2*1000*1000));
 
   declare_parameter("left_front_coxa_servo_id", 1);
   declare_parameter("left_front_coxa_servo_initial_angle", 180.0f);
