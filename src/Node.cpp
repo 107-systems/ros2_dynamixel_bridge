@@ -103,6 +103,18 @@ Node::Node()
 
   for (auto [servo, servo_ctrl] : _mx28_ctrl_map)
   {
+    std::map<Servo, float> const INITIAL_ANGLE_MAP =
+    {
+      {Servo::Coxa_Left_Front,   get_parameter("left_front_coxa_servo_initial_angle").as_double()},
+      {Servo::Coxa_Left_Middle,  get_parameter("left_middle_coxa_servo_initial_angle").as_double()},
+      {Servo::Coxa_Left_Back,    get_parameter("left_back_coxa_servo_initial_angle").as_double()},
+      {Servo::Coxa_Right_Front,  get_parameter("right_front_coxa_servo_initial_angle").as_double()},
+      {Servo::Coxa_Right_Middle, get_parameter("right_middle_coxa_servo_initial_angle").as_double()},
+      {Servo::Coxa_Right_Back,   get_parameter("right_back_coxa_servo_initial_angle").as_double()},
+      {Servo::Pan,               get_parameter("pan_servo_initial_angle").as_double()},
+      {Servo::Tilt,              get_parameter("tilt_servo_initial_angle").as_double()},
+    };
+
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
     servo_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
@@ -110,7 +122,7 @@ Node::Node()
     /* TODO: REMOVE IF */
     if (servo == Servo::Pan || servo == Servo::Tilt)
     {
-      servo_ctrl->setGoalPosition(get_parameter("pan_servo_initial_angle").as_double());
+      servo_ctrl->setGoalPosition(INITIAL_ANGLE_MAP.at(servo));
 
       bool target_angle_reached = false;
       float actual_angle_deg = 0.0f;
@@ -122,14 +134,14 @@ Node::Node()
         actual_angle_deg = servo_ctrl->getPresentPosition();
 
         static float constexpr INITIAL_ANGLE_EPSILON_deg = 2.0f;
-        target_angle_reached  = fabs(actual_angle_deg  - get_parameter("pan_servo_initial_angle").as_double())  < INITIAL_ANGLE_EPSILON_deg;
+        target_angle_reached  = fabs(actual_angle_deg  - INITIAL_ANGLE_MAP.at(servo))  < INITIAL_ANGLE_EPSILON_deg;
       }
 
       if (!target_angle_reached)
       {
         RCLCPP_ERROR(get_logger(),
                      "could not reach initial position for servo #id, target: %0.2f, actual: %0.2f.",
-                     get_parameter("pan_servo_initial_angle").as_double(),
+                     INITIAL_ANGLE_MAP.at(servo),
                      actual_angle_deg);
         rclcpp::shutdown();
         return;
