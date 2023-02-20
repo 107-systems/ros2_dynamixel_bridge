@@ -132,6 +132,7 @@ Node::Node()
                      get_parameter("pan_servo_initial_angle").as_double(),
                      actual_angle_deg);
         rclcpp::shutdown();
+        return;
       }
     }
 
