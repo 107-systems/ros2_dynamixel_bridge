@@ -182,7 +182,12 @@ Node::Node()
 
 Node::~Node()
 {
+  /* Stop rotation of all joints. */
   _mx28_sync_ctrl->setGoalVelocity(std::vector<float>{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
+  /* Switch back to position control mode - and hold position. */
+  _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  _mx28_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+  _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 }
 
 /**************************************************************************************
