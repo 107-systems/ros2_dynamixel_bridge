@@ -77,14 +77,17 @@ void SyncGroup::setGoalVelocity(std::vector<float> const & velocity_rpm_vect)
   write(static_cast<uint16_t>(ControlTable::GoalVelocity), raw_goal_velocity_vect);
 }
 
-std::tuple<float, float> SyncGroup::getPresentPosition()
+std::vector<float> SyncGroup::getPresentPosition()
 {
   std::vector<uint32_t> const angle_raw_vect = read<uint32_t>(static_cast<uint16_t>(ControlTable::PresentPosition));
 
   auto fromRegValue = [](uint32_t const angle_raw) { return static_cast<float>(angle_raw) * 360.0f / 4096.0f; };
 
-  return std::make_tuple(fromRegValue(angle_raw_vect.at(0)),
-                         fromRegValue(angle_raw_vect.at(1)));
+  std::vector<float> angle_deg_vect;
+  for (auto angle_raw : angle_raw_vect)
+    angle_deg_vect.push_back(fromRegValue(angle_raw));
+
+  return angle_deg_vect;
 }
 
 /**************************************************************************************

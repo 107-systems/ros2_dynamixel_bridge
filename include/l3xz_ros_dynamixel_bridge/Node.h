@@ -18,9 +18,9 @@
 
 #include <dynamixel++/dynamixel++.h>
 
-#include <l3xz_ros_dynamixel_bridge/msg/coxa_angle.hpp>
-#include <l3xz_ros_dynamixel_bridge/msg/head_velocity.hpp>
+#include <std_msgs/msg/float32.hpp>
 
+#include "MX28ARSingle.h"
 #include "MX28ARSyncGroup.h"
 
 /**************************************************************************************
@@ -41,14 +41,25 @@ public:
   ~Node();
 
 private:
-  l3xz_ros_dynamixel_bridge::msg::HeadVelocity _head_vel_msg;
-  rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::HeadVelocity>::SharedPtr _head_vel_sub;
+  enum class Servo
+  {
+    Coxa_Left_Front,
+    Coxa_Left_Middle,
+    Coxa_Left_Back,
+    Coxa_Right_Front,
+    Coxa_Right_Middle,
+    Coxa_Right_Back,
+    Pan,
+    Tilt,
+  };
 
-  l3xz_ros_dynamixel_bridge::msg::CoxaAngle _coxa_angle_msg;
-  rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::CoxaAngle>::SharedPtr _coxa_angle_sub;
+  std::map<Servo, float> _target_angular_velocity_dps;
+  std::map<Servo, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_pub;
+  std::map<Servo, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_vel_sub;
 
-  std::shared_ptr<MX28AR::HeadSyncGroup> _mx28_head_sync_ctrl;
-  std::shared_ptr<MX28AR::CoxaSyncGroup> _mx28_coxa_sync_ctrl;
+  std::map<Servo, std::shared_ptr<MX28AR::Single>> _mx28_ctrl_map;
+
+  std::shared_ptr<MX28AR::SyncGroup> _mx28_sync_ctrl;
 
   std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
@@ -56,8 +67,6 @@ private:
   void io_loop();
 
   void declare_parameter_all();
-  void init_pan_tilt_servos();
-  void init_coxa_servos();
 };
 
 /**************************************************************************************

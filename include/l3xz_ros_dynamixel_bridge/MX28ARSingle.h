@@ -4,14 +4,12 @@
  * Contributors: https://github.com/107-systems/l3xz_ros_dynamixel_bridge/graphs/contributors.
  */
 
-#ifndef L3XZ_HEAD_CTRL_MX28ARCONTROL_H
-#define L3XZ_HEAD_CTRL_MX28ARCONTROL_H
+#ifndef L3XZ_ROS_DYNAMIXEL_BRIDGE_MX28ARSINGLE_H
+#define L3XZ_ROS_DYNAMIXEL_BRIDGE_MX28ARSINGLE_H
 
 /**************************************************************************************
  * INCLUDE
  **************************************************************************************/
-
-#include <tuple>
 
 #include <dynamixel++/dynamixel++.h>
 
@@ -28,29 +26,30 @@ namespace l3xz::MX28AR
  * CLASS DECLARATION
  **************************************************************************************/
 
-class SyncGroup : private dynamixelplusplus::SyncGroup
+class Single
 {
 public:
   /* CTOR/DTOR ************************************************************************/
-  SyncGroup(dynamixelplusplus::SharedDynamixel dyn_ctrl,
-            dynamixelplusplus::Dynamixel::IdVect const & dyn_id_vect)
-  : dynamixelplusplus::SyncGroup{dyn_ctrl, dyn_id_vect}
-  { }
-
+  Single(dynamixelplusplus::SharedDynamixel dyn_ctrl,
+         dynamixelplusplus::Dynamixel::Id const id);
 
   /* MEMBER FUNCTIONS *****************************************************************/
-  void setTorqueEnable (TorqueEnable const torque_enable);
-  void setOperatingMode(OperatingMode const operating_mode);
-  void setGoalPosition (std::vector<float> const & angle_deg_vect);
-  void setGoalVelocity (std::vector<float> const & velocity_rpm_vect);
+  void  setTorqueEnable   (TorqueEnable const torque_enable);
+  void  setOperatingMode  (OperatingMode const operating_mode);
+  void  setGoalPosition   (float const angle_deg);
+  void  setGoalVelocity   (float const velocity_rpm);
+  float getPresentPosition();
 
-  std::vector<float> getPresentPosition();
+
+private:
+  dynamixelplusplus::SharedDynamixel _dyn_ctrl;
+  dynamixelplusplus::Dynamixel::Id const _id;
 };
 
 /**************************************************************************************
  * NAMESPACE
  **************************************************************************************/
 
-} /* l3xz */
+} /* l3xz::MX28AR */
 
-#endif //L3XZ_HEAD_CTRL_MX28ARCONTROL_H
+#endif //L3XZ_ROS_DYNAMIXEL_BRIDGE_MX28ARSINGLE_H
