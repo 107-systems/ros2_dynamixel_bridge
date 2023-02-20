@@ -67,7 +67,12 @@ void Single::setGoalVelocity(float const velocity_rpm)
 
   auto toRegValue = [](float const rpm)
   {
-    int32_t const rpm_lsb_signed = static_cast<int32_t>(rpm / RPM_per_LSB);
+    int32_t rpm_lsb_signed = static_cast<int32_t>(rpm / RPM_per_LSB);
+
+    /* Prevent drifting at little angular velocity. */
+    if (abs(rpm_lsb_signed) < 5)
+      rpm_lsb_signed = 0;
+
     return static_cast<uint32_t>(rpm_lsb_signed);
   };
 
