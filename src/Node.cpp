@@ -187,7 +187,7 @@ Node::Node()
   _angle_pub[Servo::Coxa_Right_Middle]     = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/right_middle/coxa/angle/actual", 1);
   _angle_pub[Servo::Coxa_Right_Back]       = create_publisher<std_msgs::msg::Float32>("/l3xz/leg/right_back/coxa/angle/actual", 1);
   _angle_pub[Servo::Pan]                   = create_publisher<std_msgs::msg::Float32>("/l3xz/head/pan/angle/actual", 1);
-  _angle_pub[Servo::Tilt]                  = create_publisher<std_msgs::msg::Float32>("/l3xz/head/pan/angle/actual", 1);
+  _angle_pub[Servo::Tilt]                  = create_publisher<std_msgs::msg::Float32>("/l3xz/head/tilt/angle/actual", 1);
 
   _angle_vel_sub[Servo::Coxa_Left_Front]   = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/left_front/coxa/angular_velocity/target",   1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Coxa_Left_Front] = msg->data * 180.0f / M_PI; });
   _angle_vel_sub[Servo::Coxa_Left_Middle]  = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/left_middle/coxa/angular_velocity/target",  1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Coxa_Left_Middle] = msg->data * 180.0f / M_PI; });
@@ -196,7 +196,7 @@ Node::Node()
   _angle_vel_sub[Servo::Coxa_Right_Middle] = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/right_middle/coxa/angular_velocity/target", 1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Coxa_Right_Middle] = msg->data * 180.0f / M_PI; });
   _angle_vel_sub[Servo::Coxa_Right_Back]   = create_subscription<std_msgs::msg::Float32>("/l3xz/leg/right_back/coxa/angular_velocity/target",   1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Coxa_Right_Back] = msg->data * 180.0f / M_PI; });
   _angle_vel_sub[Servo::Pan]               = create_subscription<std_msgs::msg::Float32>("/l3xz/head/pan/angular_velocity/target",              1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Pan] = msg->data * 180.0f / M_PI; });
-  _angle_vel_sub[Servo::Tilt]              = create_subscription<std_msgs::msg::Float32>("/l3xz/head/pan/angular_velocity/target",              1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Tilt] = msg->data * 180.0f / M_PI; });
+  _angle_vel_sub[Servo::Tilt]              = create_subscription<std_msgs::msg::Float32>("/l3xz/head/tilt/angular_velocity/target",             1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Tilt] = msg->data * 180.0f / M_PI; });
 
   /* Configure periodic control loop function. */
   _io_loop_timer = create_wall_timer

@@ -34,7 +34,7 @@ colcon_ws$ ros2 launch l3xz_ros_dynamixel_bridge bridge.py
 | `/l3xz/leg/right_middle/coxa/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
 | `/l3xz/leg/right_back/coxa/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
 | `/l3xz/head/pan/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
-| `/l3xz/head/pan/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
+| `/l3xz/head/tilt/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
 
 ##### Published Topics
 | Default name | Type |
@@ -46,7 +46,7 @@ colcon_ws$ ros2 launch l3xz_ros_dynamixel_bridge bridge.py
 | `/l3xz/leg/right_middle/coxa/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
 | `/l3xz/leg/right_back/coxa/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
 | `/l3xz/head/pan/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
-| `/l3xz/head/pan/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
+| `/l3xz/head/tilt/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) |
 
 ##### Parameters
 | Name | Default | Description |
