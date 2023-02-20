@@ -48,14 +48,6 @@ Node::Node()
 
   SharedDynamixel dyn_ctrl = std::make_shared<Dynamixel>(serial_port, Dynamixel::Protocol::V2_0, serial_port_baudrate);
 
-  /* Determine which/if any servos can be reached via the connected network. */
-  auto const dyn_id_vect = dyn_ctrl->broadcastPing();
-
-  std::stringstream dyn_id_list;
-  for (auto id : dyn_id_vect)
-    dyn_id_list << static_cast<int>(id) << " ";
-  RCLCPP_INFO(get_logger(), "detected Dynamixel MX-28AR: { %s}.", dyn_id_list.str().c_str());
-
   Dynamixel::Id const left_front_coxa_servo_id   = static_cast<Dynamixel::Id>(get_parameter("left_front_coxa_servo_id").as_int());
   Dynamixel::Id const left_middle_coxa_servo_id  = static_cast<Dynamixel::Id>(get_parameter("left_middle_coxa_servo_id").as_int());
   Dynamixel::Id const left_back_coxa_servo_id    = static_cast<Dynamixel::Id>(get_parameter("left_back_coxa_servo_id").as_int());
@@ -65,17 +57,41 @@ Node::Node()
   Dynamixel::Id const pan_servo_id               = static_cast<Dynamixel::Id>(get_parameter("pan_servo_id").as_int());
   Dynamixel::Id const tilt_servo_id              = static_cast<Dynamixel::Id>(get_parameter("tilt_servo_id").as_int());
 
+  /* Create a map for individually controlling all the servos. */
+  _mx28_ctrl_map[Servo::Coxa_Left_Front]   = std::make_shared<MX28AR::Single>(dyn_ctrl, left_front_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Left_Middle]  = std::make_shared<MX28AR::Single>(dyn_ctrl, left_middle_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Left_Back]    = std::make_shared<MX28AR::Single>(dyn_ctrl, left_back_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Right_Front]  = std::make_shared<MX28AR::Single>(dyn_ctrl, right_front_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Right_Middle] = std::make_shared<MX28AR::Single>(dyn_ctrl, right_middle_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Coxa_Right_Back]   = std::make_shared<MX28AR::Single>(dyn_ctrl, right_back_coxa_servo_id);
+  _mx28_ctrl_map[Servo::Pan]               = std::make_shared<MX28AR::Single>(dyn_ctrl, pan_servo_id);
+  _mx28_ctrl_map[Servo::Tilt]              = std::make_shared<MX28AR::Single>(dyn_ctrl, tilt_servo_id);
+
+  /* Reboot all servos to start from a clean slate. */
+  RCLCPP_INFO(get_logger(), "issuing reboot command to all configured servo id's.");
+  for (auto [servo, servo_ctrl] : _mx28_ctrl_map)
+    servo_ctrl->reboot();
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+  /* Determine which/if any servos can be reached via the connected network. */
+  auto const dyn_id_vect = dyn_ctrl->broadcastPing();
+
+  std::stringstream dyn_id_list;
+  for (auto id : dyn_id_vect)
+    dyn_id_list << static_cast<int>(id) << " ";
+  RCLCPP_INFO(get_logger(), "detected Dynamixel MX-28AR: { %s}.", dyn_id_list.str().c_str());
+
   std::vector<Dynamixel::Id> const L3XZ_DYNAMIXEL_ID_VECT =
-  {
-    left_front_coxa_servo_id,
-    left_middle_coxa_servo_id,
-    left_back_coxa_servo_id,
-    right_back_coxa_servo_id,
-    right_middle_coxa_servo_id,
-    right_front_coxa_servo_id,
-    pan_servo_id,
-    tilt_servo_id,
-  };
+    {
+      left_front_coxa_servo_id,
+      left_middle_coxa_servo_id,
+      left_back_coxa_servo_id,
+      right_back_coxa_servo_id,
+      right_middle_coxa_servo_id,
+      right_front_coxa_servo_id,
+      pan_servo_id,
+      tilt_servo_id,
+    };
 
   bool all_servos_online = true;
   std::stringstream offline_id_list;
@@ -91,16 +107,7 @@ Node::Node()
     return;
   }
 
-  /* Create a map for individually controlling all the servos. */
-  _mx28_ctrl_map[Servo::Coxa_Left_Front]   = std::make_shared<MX28AR::Single>(dyn_ctrl, left_front_coxa_servo_id);
-  _mx28_ctrl_map[Servo::Coxa_Left_Middle]  = std::make_shared<MX28AR::Single>(dyn_ctrl, left_middle_coxa_servo_id);
-  _mx28_ctrl_map[Servo::Coxa_Left_Back]    = std::make_shared<MX28AR::Single>(dyn_ctrl, left_back_coxa_servo_id);
-  _mx28_ctrl_map[Servo::Coxa_Right_Front]  = std::make_shared<MX28AR::Single>(dyn_ctrl, right_front_coxa_servo_id);
-  _mx28_ctrl_map[Servo::Coxa_Right_Middle] = std::make_shared<MX28AR::Single>(dyn_ctrl, right_middle_coxa_servo_id);
-  _mx28_ctrl_map[Servo::Coxa_Right_Back]   = std::make_shared<MX28AR::Single>(dyn_ctrl, right_back_coxa_servo_id);
-  _mx28_ctrl_map[Servo::Pan]               = std::make_shared<MX28AR::Single>(dyn_ctrl, pan_servo_id);
-  _mx28_ctrl_map[Servo::Tilt]              = std::make_shared<MX28AR::Single>(dyn_ctrl, tilt_servo_id);
-
+  /* Initialize all servos. */
   for (auto [servo, servo_ctrl] : _mx28_ctrl_map)
   {
     std::map<Servo, float> const INITIAL_ANGLE_MAP =
@@ -234,7 +241,29 @@ void Node::io_loop()
   _prev_io_loop_timepoint = now;
 
   /* Synchronously retrieve the current position of each servo. ***********************/
-  auto const actual_angle_deg_vect = _mx28_sync_ctrl->getPresentPosition();
+  std::vector<float> actual_angle_deg_vect{};
+  try
+  {
+    actual_angle_deg_vect = _mx28_sync_ctrl->getPresentPosition();
+  }
+  catch (dynamixelplusplus::HardwareAlert const & err)
+  {
+    RCLCPP_ERROR(get_logger(), "hardware alert for servo #%d caught.", static_cast<int>(err.id()));
+    auto iter = std::find_if(_mx28_ctrl_map.begin(), _mx28_ctrl_map.end(), [err](auto const elem) { return (elem.second->id() == err.id()); });
+    if (iter == _mx28_ctrl_map.end()) {
+      RCLCPP_ERROR(get_logger(), "no servo with id #%d found.", static_cast<int>(err.id()));
+      return;
+    }
+    auto const servo_ctrl = iter->second;
+    uint8_t const hw_err_code = servo_ctrl->getHardwareErrorCode();
+    RCLCPP_ERROR(get_logger(), "\thardware error code for servo #%d caught: %02X", static_cast<int>(servo_ctrl->id()), hw_err_code);
+    servo_ctrl->reboot();
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+    servo_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+    servo_ctrl->setGoalVelocity (0.0f);
+  }
+
   std::map<Servo, float> const actual_angle_deg_map =
   {
     {Servo::Coxa_Left_Front,   actual_angle_deg_vect.at(0)},
@@ -308,7 +337,28 @@ void Node::io_loop()
     target_velocity_rpm_map.at(Servo::Pan),
     target_velocity_rpm_map.at(Servo::Tilt),
   };
-  _mx28_sync_ctrl->setGoalVelocity(target_velocity_rpm_vect);
+
+  try
+  {
+    _mx28_sync_ctrl->setGoalVelocity(target_velocity_rpm_vect);
+  }
+  catch (dynamixelplusplus::HardwareAlert const & err)
+  {
+    RCLCPP_ERROR(get_logger(), "hardware alert for servo #%d caught.", static_cast<int>(err.id()));
+    auto iter = std::find_if(_mx28_ctrl_map.begin(), _mx28_ctrl_map.end(), [err](auto const elem) { return (elem.second->id() == err.id()); });
+    if (iter == _mx28_ctrl_map.end()) {
+      RCLCPP_ERROR(get_logger(), "no servo with id #%d found.", static_cast<int>(err.id()));
+      return;
+    }
+    auto const servo_ctrl = iter->second;
+    uint8_t const hw_err_code = servo_ctrl->getHardwareErrorCode();
+    RCLCPP_ERROR(get_logger(), "\thardware error code for servo #%d caught: %02X", static_cast<int>(servo_ctrl->id()), hw_err_code);
+    servo_ctrl->reboot();
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+    servo_ctrl->setOperatingMode(MX28AR::OperatingMode::VelocityControlMode);
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+    servo_ctrl->setGoalVelocity (0.0f);
+  }
 }
 
 void Node::declare_parameter_all()

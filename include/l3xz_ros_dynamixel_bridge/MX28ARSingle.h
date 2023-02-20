@@ -34,11 +34,16 @@ public:
          dynamixelplusplus::Dynamixel::Id const id);
 
   /* MEMBER FUNCTIONS *****************************************************************/
-  void  setTorqueEnable   (TorqueEnable const torque_enable);
-  void  setOperatingMode  (OperatingMode const operating_mode);
-  void  setGoalPosition   (float const angle_deg);
-  void  setGoalVelocity   (float const velocity_rpm);
-  float getPresentPosition();
+  void reboot();
+
+  void setTorqueEnable   (TorqueEnable const torque_enable);
+  void setOperatingMode  (OperatingMode const operating_mode);
+  void setGoalPosition   (float const angle_deg);
+  void setGoalVelocity   (float const velocity_rpm);
+
+  [[nodiscard]] float   getPresentPosition();
+  [[nodiscard]] uint8_t getHardwareErrorCode();
+  [[nodiscard]] dynamixelplusplus::Dynamixel::Id id() const {  return _id; }
 
 
 private:

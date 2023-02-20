@@ -31,6 +31,11 @@ Single::Single(dynamixelplusplus::SharedDynamixel dyn_ctrl,
  * PUBLIC MEMBER FUNCTIONS
  **************************************************************************************/
 
+void Single::reboot()
+{
+  _dyn_ctrl->reboot(_id);
+}
+
 void Single::setTorqueEnable(TorqueEnable const torque_enable)
 {
   _dyn_ctrl->write(static_cast<uint16_t>(ControlTable::TorqueEnable), _id, static_cast<uint8_t>(torque_enable));
@@ -75,6 +80,12 @@ float Single::getPresentPosition()
   uint32_t const angle_raw = _dyn_ctrl->read<uint32_t>(static_cast<uint16_t>(ControlTable::PresentPosition), _id);
   float const angle_deg = static_cast<float>(angle_raw) * 360.0f / 4096.0f;
   return angle_deg;
+}
+
+uint8_t Single::getHardwareErrorCode()
+{
+  uint8_t const hw_err_code = _dyn_ctrl->read<uint8_t>(static_cast<uint16_t>(ControlTable::HardwareErrorStatus), _id);
+  return hw_err_code;
 }
 
 /**************************************************************************************
