@@ -115,6 +115,18 @@ Node::Node()
       {Servo::Tilt,              get_parameter("tilt_servo_initial_angle").as_double()},
     };
 
+    std::map<Servo, std::string> const SERVO_NAME_MAP =
+    {
+      {Servo::Coxa_Left_Front,   std::string("coxa (L/F)")},
+      {Servo::Coxa_Left_Middle,  std::string("coxa (L/M)")},
+      {Servo::Coxa_Left_Back,    std::string("coxa (L/B)")},
+      {Servo::Coxa_Right_Front,  std::string("coxa (R/F)")},
+      {Servo::Coxa_Right_Middle, std::string("coxa (R/M)")},
+      {Servo::Coxa_Right_Back,   std::string("coxa (R/B)")},
+      {Servo::Pan,               std::string("pan")},
+      {Servo::Tilt,              std::string("tilt")},
+    };
+
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
     servo_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
@@ -140,7 +152,8 @@ Node::Node()
       if (!target_angle_reached)
       {
         RCLCPP_ERROR(get_logger(),
-                     "could not reach initial position for servo #id, target: %0.2f, actual: %0.2f.",
+                     "could not reach initial position for %s servo, target: %0.2f, actual: %0.2f.",
+                     SERVO_NAME_MAP.at(servo).c_str(),
                      INITIAL_ANGLE_MAP.at(servo),
                      actual_angle_deg);
         rclcpp::shutdown();
