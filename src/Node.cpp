@@ -131,7 +131,7 @@ Node::Node()
        });
 
     _angle_deg_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
-      (angle_vel_sub_topic.str(),
+      (angle_deg_sub_topic.str(),
        1,
        [this, servo_id](std_msgs::msg::Float32::SharedPtr const msg)
        {
