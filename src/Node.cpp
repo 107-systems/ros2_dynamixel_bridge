@@ -52,10 +52,7 @@ Node::Node()
   for (auto servo_id : dyn_id_vect)
   {
     /* TODO: Retrieve default parameter from param file, if available. */
-    auto servo_cfg = std::make_shared<ServoConfiguration>(MX28AR::OperatingMode::PositionControlMode,
-                                                          180.0f,
-                                                          0.0f,
-                                                          180.0f);
+    auto servo_cfg = std::make_shared<ServoConfiguration>(MX28AR::OperatingMode::PositionControlMode, 180.0f);
     auto servo_ctrl = std::make_shared<MX28AR::Single>(dyn_ctrl, servo_id);
 
     /* Reboot all servo to start from a clean slate. */
@@ -63,8 +60,12 @@ Node::Node()
     /* Wait a little so we can be sure that all servos are online again. */
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-    _mx28_cfg_map[servo_id] = servo_cfg;
+    _mx28_cfg_map [servo_id] = servo_cfg;
     _mx28_ctrl_map[servo_id] = servo_ctrl;
+
+    /* Configure initial velocity and target angle. */
+    _target_angle_deg_map           [servo_id] = servo_cfg->initial_target_angle_deg;
+    _target_angular_velocity_dps_map[servo_id] = 0.0f;
 
     std::stringstream
       angle_deg_pub_topic,
@@ -124,17 +125,17 @@ Node::Node()
     _angle_vel_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
       (angle_vel_sub_topic.str(),
        1,
-       [this, servo_cfg](std_msgs::msg::Float32::SharedPtr const msg)
+       [this, servo_id](std_msgs::msg::Float32::SharedPtr const msg)
        {
-         servo_cfg->target_angular_velocity_dps = msg->data * 180.0f / M_PI;
+         _target_angular_velocity_dps_map[servo_id] = msg->data * 180.0f / M_PI;
        });
 
     _angle_deg_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
       (angle_vel_sub_topic.str(),
        1,
-       [this, servo_cfg](std_msgs::msg::Float32::SharedPtr const msg)
+       [this, servo_id](std_msgs::msg::Float32::SharedPtr const msg)
        {
-         servo_cfg->target_angle_deg = msg->data * 180.0f / M_PI;
+         _target_angle_deg_map[servo_id] = msg->data * 180.0f / M_PI;
        });
   }
 
@@ -224,7 +225,7 @@ void Node::io_loop()
     static float constexpr DEADZONE_RPM = 1.0f;
     static float constexpr DPS_per_RPM = 360.0f / 60.0f;
 
-    float const target_velocity_rpm = servo_cfg->target_angular_velocity_dps / DPS_per_RPM;
+    float const target_velocity_rpm = _target_angular_velocity_dps_map.at(servo_id) / DPS_per_RPM;
 
     /* Checking if the target velocity exceeds the configured dead-zone.
      * Only then we should actually write a value != 0 to the servos,
@@ -241,9 +242,9 @@ void Node::io_loop()
    */
   for (auto [servo_id, servo_cfg] : _mx28_cfg_map)
   {
-    if ((actual_angle_deg_map.at(servo_id) < 160.0f) && (servo_cfg->target_angular_velocity_dps < 0.0f))
+    if ((actual_angle_deg_map.at(servo_id) < 160.0f) && (_target_angular_velocity_dps_map.at(servo_id) < 0.0f))
       target_velocity_rpm_map[servo_id] = 0.0f;
-    if ((actual_angle_deg_map.at(servo_id) > 200.0f) && (servo_cfg->target_angular_velocity_dps > 0.0f))
+    if ((actual_angle_deg_map.at(servo_id) > 200.0f) && (_target_angular_velocity_dps_map.at(servo_id) > 0.0f))
       target_velocity_rpm_map[servo_id] = 0.0f;
   }
 
