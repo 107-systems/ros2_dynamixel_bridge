@@ -205,6 +205,11 @@ Node::Node()
   _angle_vel_sub[Servo::Pan]               = create_subscription<std_msgs::msg::Float32>("/l3xz/head/pan/angular_velocity/target",              1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Pan] = msg->data * 180.0f / M_PI; });
   _angle_vel_sub[Servo::Tilt]              = create_subscription<std_msgs::msg::Float32>("/l3xz/head/tilt/angular_velocity/target",             1, [this](std_msgs::msg::Float32::SharedPtr const msg) { _target_angular_velocity_dps[Servo::Tilt] = msg->data * 180.0f / M_PI; });
 
+  _set_mode_srv = create_service<l3xz_ros_dynamixel_bridge::srv::SetMode>(
+    "/l3xz/dynamixel/mode/set",
+    [this](std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Request> const request, std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Response> response)
+    { set_mode(request, response); });
+
   /* Configure periodic control loop function. */
   _io_loop_timer = create_wall_timer
     (std::chrono::milliseconds(IO_LOOP_RATE.count()),
@@ -414,6 +419,31 @@ void Node::declare_parameter_all()
   declare_parameter("tilt_servo_initial_angle", 180.0f);
   declare_parameter("tilt_servo_min_angle", 170.0f);
   declare_parameter("tilt_servo_max_angle", 190.0f);
+}
+
+void Node::set_mode(std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Request> const request,
+                    std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Response> response)
+{
+  /* Obtain all parameters. */
+  Dynamixel::Id const servo_id = request->servo_id;
+  MX28AR::OperatingMode const op_mode = static_cast<MX28AR::OperatingMode>(request->servo_mode);
+
+  /* Check if we have such a servo id registered. */
+  auto iter = std::find_if(_mx28_ctrl_map.begin(), _mx28_ctrl_map.end(), [servo_id](auto const elem) { return (elem.second->id() == servo_id); });
+  if (iter == _mx28_ctrl_map.end()) {
+    RCLCPP_ERROR(get_logger(), "no servo with id #%d found.", static_cast<int>(servo_id));
+    response->result = l3xz_ros_dynamixel_bridge::srv::SetMode::Response::SET_MODE_ERROR;
+    return;
+  }
+
+  /* Perform the desired change in operation mode. */
+  auto const servo_ctrl = iter->second;
+  servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+  servo_ctrl->setOperatingMode(op_mode);
+  servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+
+  /* Set the return code. */
+  response->result = l3xz_ros_dynamixel_bridge::srv::SetMode::Response::SET_MODE_SUCCESS;
 }
 
 /**************************************************************************************

@@ -20,6 +20,8 @@
 
 #include <std_msgs/msg/float32.hpp>
 
+#include <l3xz_ros_dynamixel_bridge/srv/set_mode.hpp>
+
 #include "MX28ARSingle.h"
 #include "MX28ARSyncGroup.h"
 
@@ -57,6 +59,8 @@ private:
   std::map<Servo, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_pub;
   std::map<Servo, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_vel_sub;
 
+  rclcpp::Service<l3xz_ros_dynamixel_bridge::srv::SetMode>::SharedPtr _set_mode_srv;
+
   std::map<Servo, std::shared_ptr<MX28AR::Single>> _mx28_ctrl_map;
 
   std::shared_ptr<MX28AR::SyncGroup> _mx28_sync_ctrl;
@@ -67,6 +71,7 @@ private:
   void io_loop();
 
   void declare_parameter_all();
+  void set_mode(std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Request> const request, std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Response> response);
 };
 
 /**************************************************************************************
