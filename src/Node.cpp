@@ -84,9 +84,9 @@ Node::Node()
                 angle_deg_sub_topic.str().c_str(),
                 angle_vel_sub_topic.str().c_str());
 
-    servo_ctrl->setTorqueEnable(MX28AR::TorqueEnable::Off);
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
     servo_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
-    servo_ctrl->setTorqueEnable(MX28AR::TorqueEnable::On);
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 
     float const target_angle_deg = servo_cfg->initial_target_angle_deg;
     servo_ctrl->setGoalPosition(target_angle_deg);
