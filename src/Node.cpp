@@ -69,20 +69,20 @@ Node::Node()
 
     std::stringstream
       angle_deg_pub_topic,
-      angle_vel_sub_topic,
-      angle_deg_sub_topic;
+      angle_deg_sub_topic,
+      angle_vel_sub_topic;
 
     angle_deg_pub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/actual";
-    angle_vel_sub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angular_velocity/target";
     angle_deg_sub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/target";
+    angle_vel_sub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angular_velocity/target";
 
     RCLCPP_INFO(get_logger(),
                 "initialize servo #%d\n\tInit. Pos. = %0.2f\n\tPub:       = %s\n\tSub:       = %s\n\tSub:       = %s",
                 static_cast<int>(servo_id),
                 servo_cfg->initial_target_angle_deg,
                 angle_deg_pub_topic.str().c_str(),
-                angle_vel_sub_topic.str().c_str(),
-                angle_deg_sub_topic.str().c_str());
+                angle_deg_sub_topic.str().c_str(),
+                angle_vel_sub_topic.str().c_str());
 
     servo_ctrl->setTorqueEnable(MX28AR::TorqueEnable::Off);
     servo_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
@@ -116,19 +116,7 @@ Node::Node()
     }
 
     /* Create per-servo publisher/subscriber. */
-    servo_ctrl->setTorqueEnable(MX28AR::TorqueEnable::Off);
-    servo_ctrl->setOperatingMode(_mx28_cfg_map.at(servo_id)->op_mode);
-    servo_ctrl->setTorqueEnable(MX28AR::TorqueEnable::On);
-
     _angle_deg_pub[servo_id] = this->create_publisher<std_msgs::msg::Float32>(angle_deg_pub_topic.str(), 1);
-
-    _angle_vel_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
-      (angle_vel_sub_topic.str(),
-       1,
-       [this, servo_id](std_msgs::msg::Float32::SharedPtr const msg)
-       {
-         _target_angular_velocity_dps_map[servo_id] = msg->data * 180.0f / M_PI;
-       });
 
     _angle_deg_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
       (angle_deg_sub_topic.str(),
@@ -136,6 +124,14 @@ Node::Node()
        [this, servo_id](std_msgs::msg::Float32::SharedPtr const msg)
        {
          _target_angle_deg_map[servo_id] = msg->data * 180.0f / M_PI;
+       });
+
+    _angle_vel_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
+      (angle_vel_sub_topic.str(),
+       1,
+       [this, servo_id](std_msgs::msg::Float32::SharedPtr const msg)
+       {
+         _target_angular_velocity_dps_map[servo_id] = msg->data * 180.0f / M_PI;
        });
   }
 
