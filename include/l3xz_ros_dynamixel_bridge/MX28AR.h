@@ -27,6 +27,7 @@ enum class ControlTable : uint16_t
   GoalVelocity = 104,
   GoalPosition = 116,
   PresentPosition = 132,
+  HardwareErrorStatus = 70
 };
 
 enum class OperatingMode : uint8_t

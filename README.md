@@ -52,7 +52,7 @@ colcon_ws$ ros2 launch l3xz_ros_dynamixel_bridge bridge.py
 | Name | Default | Description |
 |:-:|:-:|-|
 | `serial_port` | `/dev/ttyUSB0` | Serial port of RS485 bus. |
-| `serial_port_baudrate` | 115200 | Serial baud rate of RS485 bus. |
+| `serial_port_baudrate` | 2 Mbps | Serial baud rate of RS485 bus. |
 | `left_front_coxa_servo_id` | 1 | Dynamixel ID of coxa servo of the left front leg. |
 | `left_front_coxa_servo_initial_angle` | 180.0 | |
 | `left_front_coxa_servo_min_angle` | 170.0 | |
