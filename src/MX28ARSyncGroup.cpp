@@ -48,6 +48,8 @@ void SyncGroup::setGoalPosition(std::map<dynamixelplusplus::Dynamixel::Id, float
   for (auto [id, angle_deg] : angle_deg_map)
     raw_goal_position_vect.push_back(toRegValue(limit_angle(angle_deg)));
 
+  assert(raw_goal_position_vect.size() == _dyn_id_vect.size());
+
   write(static_cast<uint16_t>(ControlTable::GoalPosition), raw_goal_position_vect);
 }
 
@@ -73,6 +75,8 @@ void SyncGroup::setGoalVelocity(std::map<dynamixelplusplus::Dynamixel::Id, float
   std::vector<uint32_t> raw_goal_velocity_vect;
   for (auto [id, vel_rpm] : velocity_rpm_map)
     raw_goal_velocity_vect.push_back(toRegValue(limit_velocity(vel_rpm)));
+
+  assert(raw_goal_velocity_vect.size() == _dyn_id_vect.size());
 
   write(static_cast<uint16_t>(ControlTable::GoalVelocity), raw_goal_velocity_vect);
 }
