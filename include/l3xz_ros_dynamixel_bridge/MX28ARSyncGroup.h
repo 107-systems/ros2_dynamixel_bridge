@@ -42,7 +42,7 @@ public:
   /* MEMBER FUNCTIONS *****************************************************************/
   void setTorqueEnable (TorqueEnable const torque_enable);
   void setOperatingMode(OperatingMode const operating_mode);
-  void setGoalPosition (std::vector<float> const & angle_deg_vect);
+  void setGoalPosition (std::map<dynamixelplusplus::Dynamixel::Id, float> const & angle_deg_map);
   void setGoalVelocity (std::map<dynamixelplusplus::Dynamixel::Id, float> const & velocity_rpm_map);
 
   std::map<dynamixelplusplus::Dynamixel::Id, float> getPresentPosition();

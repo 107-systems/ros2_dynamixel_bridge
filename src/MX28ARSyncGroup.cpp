@@ -33,7 +33,7 @@ void SyncGroup::setOperatingMode(OperatingMode const operating_mode)
   write(static_cast<uint16_t>(ControlTable::OperatingMode), static_cast<uint8_t>(operating_mode));
 }
 
-void SyncGroup::setGoalPosition(std::vector<float> const & angle_deg_vect)
+void SyncGroup::setGoalPosition(std::map<dynamixelplusplus::Dynamixel::Id, float> const & angle_deg_map)
 {
   auto limit_angle = [](float const angle_deg)
   {
@@ -45,7 +45,7 @@ void SyncGroup::setGoalPosition(std::vector<float> const & angle_deg_vect)
   auto toRegValue = [](float const angle_deg) { return static_cast<uint32_t>((angle_deg * 4096.0f) / 360.0f); };
 
   std::vector<uint32_t> raw_goal_position_vect;
-  for (auto angle_deg : angle_deg_vect)
+  for (auto [id, angle_deg] : angle_deg_map)
     raw_goal_position_vect.push_back(toRegValue(limit_angle(angle_deg)));
 
   write(static_cast<uint16_t>(ControlTable::GoalPosition), raw_goal_position_vect);

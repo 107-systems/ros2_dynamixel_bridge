@@ -203,8 +203,7 @@ void Node::io_loop()
 
   /* Synchronously retrieve the current position of each servo. ***********************/
   std::map<Dynamixel::Id, float> actual_angle_deg_map;
-  try
-  {
+  try {
     actual_angle_deg_map = _mx28_sync_ctrl->getPresentPosition();
   }
   catch (dynamixelplusplus::HardwareAlert const & err)
@@ -250,15 +249,20 @@ void Node::io_loop()
     target_velocity_rpm_map[servo_id] = target_velocity_rpm;
   }
 
-  /* Write the computed RPM value to the Dynamixel MX-28AR
-   * servos of the pan/tilt head.
-   */
-  try
-  {
+  /* Write the computed RPM values to the servos. *************************************/
+  try {
     _mx28_sync_ctrl->setGoalVelocity(target_velocity_rpm_map);
   }
-  catch (dynamixelplusplus::HardwareAlert const & err)
-  {
+  catch (dynamixelplusplus::HardwareAlert const & err) {
+    dynamixel_error_hdl(err.id());
+    return;
+  }
+
+  /* Write the computed angle values to the servos. ***********************************/
+  try {
+    _mx28_sync_ctrl->setGoalPosition(_target_angle_deg_map);
+  }
+  catch (dynamixelplusplus::HardwareAlert const & err) {
     dynamixel_error_hdl(err.id());
     return;
   }
