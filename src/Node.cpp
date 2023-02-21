@@ -181,18 +181,13 @@ void Node::io_loop()
                          std::chrono::duration_cast<std::chrono::milliseconds>(io_loop_rate).count());
   _prev_io_loop_timepoint = now;
 
-  /* Synchronously retrieve the current position of each servo. ***********************/
-  std::map<Dynamixel::Id, float> actual_angle_deg_map;
-  try
+  /* This function contains the general error handling and recovery code. *************/
+  auto dynamixel_error_hdl = [this](Dynamixel::Id const err_id)
   {
-    actual_angle_deg_map = _mx28_sync_ctrl->getPresentPosition();
-  }
-  catch (dynamixelplusplus::HardwareAlert const & err)
-  {
-    RCLCPP_ERROR(get_logger(), "hardware alert for servo #%d caught.", static_cast<int>(err.id()));
-    auto iter = _mx28_ctrl_map.find(err.id());
+    RCLCPP_ERROR(get_logger(), "hardware alert for servo #%d caught.", static_cast<int>(err_id));
+    auto iter = _mx28_ctrl_map.find(err_id);
     if (iter == _mx28_ctrl_map.end()) {
-      RCLCPP_ERROR(get_logger(), "no servo with id #%d found.", static_cast<int>(err.id()));
+      RCLCPP_ERROR(get_logger(), "no servo with id #%d found.", static_cast<int>(err_id));
       return;
     }
     auto const servo_ctrl = iter->second;
@@ -204,6 +199,17 @@ void Node::io_loop()
     servo_ctrl->setOperatingMode(servo_cfg->op_mode);
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
     servo_ctrl->setGoalVelocity (0.0f);
+  };
+
+  /* Synchronously retrieve the current position of each servo. ***********************/
+  std::map<Dynamixel::Id, float> actual_angle_deg_map;
+  try
+  {
+    actual_angle_deg_map = _mx28_sync_ctrl->getPresentPosition();
+  }
+  catch (dynamixelplusplus::HardwareAlert const & err)
+  {
+    dynamixel_error_hdl(err.id());
     return;
   }
 
@@ -253,21 +259,7 @@ void Node::io_loop()
   }
   catch (dynamixelplusplus::HardwareAlert const & err)
   {
-    RCLCPP_ERROR(get_logger(), "hardware alert for servo #%d caught.", static_cast<int>(err.id()));
-    auto iter = _mx28_ctrl_map.find(err.id());
-    if (iter == _mx28_ctrl_map.end()) {
-      RCLCPP_ERROR(get_logger(), "no servo with id #%d found.", static_cast<int>(err.id()));
-      return;
-    }
-    auto const servo_ctrl = iter->second;
-    auto const servo_cfg = _mx28_cfg_map.at(servo_ctrl->id());
-    uint8_t const hw_err_code = servo_ctrl->getHardwareErrorCode();
-    RCLCPP_ERROR(get_logger(), "\thardware error code for servo #%d caught: %02X", static_cast<int>(servo_ctrl->id()), hw_err_code);
-    servo_ctrl->reboot();
-    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-    servo_ctrl->setOperatingMode(servo_cfg->op_mode);
-    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-    servo_ctrl->setGoalVelocity (0.0f);
+    dynamixel_error_hdl(err.id());
     return;
   }
 }
