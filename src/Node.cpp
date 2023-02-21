@@ -158,8 +158,6 @@ Node::Node()
 
 Node::~Node()
 {
-  /* Stop rotation of all joints. */
-  _mx28_sync_ctrl->setGoalVelocity(std::vector<float>{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f});
   /* Switch back to position control mode - and hold position. */
   _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
   _mx28_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
@@ -251,11 +249,7 @@ void Node::io_loop()
    */
   try
   {
-    std::vector<float> target_velocity_rpm_vect;
-    for (auto [id, target_velocity_rpm] : target_velocity_rpm_map)
-      target_velocity_rpm_vect.push_back(target_velocity_rpm);
-
-    _mx28_sync_ctrl->setGoalVelocity(target_velocity_rpm_vect);
+    _mx28_sync_ctrl->setGoalVelocity(target_velocity_rpm_map);
   }
   catch (dynamixelplusplus::HardwareAlert const & err)
   {

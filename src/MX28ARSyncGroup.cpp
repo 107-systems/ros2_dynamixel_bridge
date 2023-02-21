@@ -51,7 +51,7 @@ void SyncGroup::setGoalPosition(std::vector<float> const & angle_deg_vect)
   write(static_cast<uint16_t>(ControlTable::GoalPosition), raw_goal_position_vect);
 }
 
-void SyncGroup::setGoalVelocity(std::vector<float> const & velocity_rpm_vect)
+void SyncGroup::setGoalVelocity(std::map<dynamixelplusplus::Dynamixel::Id, float> const & velocity_rpm_map)
 {
   static float const RPM_per_LSB = 0.229f;
   static float const MAX_VELOCITY_rpm = RPM_per_LSB * 1023.0f;
@@ -71,7 +71,7 @@ void SyncGroup::setGoalVelocity(std::vector<float> const & velocity_rpm_vect)
   };
 
   std::vector<uint32_t> raw_goal_velocity_vect;
-  for (auto vel_rpm : velocity_rpm_vect)
+  for (auto [id, vel_rpm] : velocity_rpm_map)
     raw_goal_velocity_vect.push_back(toRegValue(limit_velocity(vel_rpm)));
 
   write(static_cast<uint16_t>(ControlTable::GoalVelocity), raw_goal_velocity_vect);

@@ -43,7 +43,7 @@ public:
   void setTorqueEnable (TorqueEnable const torque_enable);
   void setOperatingMode(OperatingMode const operating_mode);
   void setGoalPosition (std::vector<float> const & angle_deg_vect);
-  void setGoalVelocity (std::vector<float> const & velocity_rpm_vect);
+  void setGoalVelocity (std::map<dynamixelplusplus::Dynamixel::Id, float> const & velocity_rpm_map);
 
   std::map<dynamixelplusplus::Dynamixel::Id, float> getPresentPosition();
 
