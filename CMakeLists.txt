@@ -31,7 +31,7 @@ target_compile_features(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} PRIVATE cxx_std_17)
 target_link_libraries(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} dynamixel++)
 #######################################################################################
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/SetMode.srv"
+  "msg/Mode.msg"
 )
 #######################################################################################
 rosidl_target_interfaces(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} ${PROJECT_NAME} "rosidl_typesupport_cpp")

@@ -1,8 +1,3 @@
-uint8 servo_id
 uint8 servo_mode
 uint8 SERVO_MODE_VELOCITY_CONTROL = 1
 uint8 SERVO_MODE_POSITION_CONTROL = 3
----
-int8 result
-int8 SET_MODE_SUCCESS = 0
-int8 SET_MODE_ERROR = -1

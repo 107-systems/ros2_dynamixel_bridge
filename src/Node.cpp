@@ -70,19 +70,22 @@ Node::Node()
     std::stringstream
       angle_deg_pub_topic,
       angle_deg_sub_topic,
-      angle_vel_sub_topic;
+      angle_vel_sub_topic,
+      mode_sub_topic;
 
     angle_deg_pub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/actual";
     angle_deg_sub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/target";
     angle_vel_sub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angular_velocity/target";
+    mode_sub_topic      << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/mode/set";
 
     RCLCPP_INFO(get_logger(),
-                "initialize servo #%d\n\tInit. Pos. = %0.2f\n\tPub:       = %s\n\tSub:       = %s\n\tSub:       = %s",
+                "initialize servo #%d\n\tInit. Pos. = %0.2f\n\tPub:       = %s\n\tSub:       = %s\n\tSub:       = %s\n\tSub:       = %s",
                 static_cast<int>(servo_id),
                 servo_cfg->initial_target_angle_deg,
                 angle_deg_pub_topic.str().c_str(),
                 angle_deg_sub_topic.str().c_str(),
-                angle_vel_sub_topic.str().c_str());
+                angle_vel_sub_topic.str().c_str(),
+                mode_sub_topic.str().c_str());
 
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
     servo_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
@@ -133,16 +136,40 @@ Node::Node()
        {
          _target_angular_velocity_dps_map[servo_id] = msg->data * 180.0f / M_PI;
        });
+
+    _mode_sub[servo_id] = create_subscription<l3xz_ros_dynamixel_bridge::msg::Mode>
+      (mode_sub_topic.str(),
+       1,
+       [this, servo_id, servo_ctrl, servo_cfg](l3xz_ros_dynamixel_bridge::msg::Mode::SharedPtr const msg)
+       {
+         /* Obtain the desired operation mode. */
+         MX28AR::OperatingMode next_op_mode = servo_cfg->op_mode;
+
+         if      (msg->servo_mode == l3xz_ros_dynamixel_bridge::msg::Mode::SERVO_MODE_VELOCITY_CONTROL)
+           next_op_mode = MX28AR::OperatingMode::VelocityControlMode;
+         else if (msg->servo_mode == l3xz_ros_dynamixel_bridge::msg::Mode::SERVO_MODE_POSITION_CONTROL)
+           next_op_mode = MX28AR::OperatingMode::PositionControlMode;
+         else {
+           RCLCPP_ERROR(get_logger(), "invalid value (%d) for parameter op mode.", static_cast<int>(msg->servo_mode));
+           return;
+         }
+
+         /* Only configure the servo if the operational mode has changed. */
+         if (next_op_mode != servo_cfg->op_mode)
+         {
+           servo_cfg->op_mode = next_op_mode;
+
+           RCLCPP_INFO(get_logger(), "servo #%d is set to mode %d.", static_cast<int>(servo_id) , static_cast<int>(servo_cfg->op_mode));
+
+           servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+           servo_ctrl->setOperatingMode(servo_cfg->op_mode);
+           servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+         }
+       });
   }
 
   /* Create sync group consisting of all dynamixel servos. */
   _mx28_sync_ctrl = std::make_shared<MX28AR::SyncGroup>(dyn_ctrl, dyn_id_vect);
-
-  /* Configure subscribers and publishers. */
-  _set_mode_srv = create_service<l3xz_ros_dynamixel_bridge::srv::SetMode>(
-    "/l3xz/dynamixel/mode/set",
-    [this](std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Request> const request, std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Response> response)
-    { set_mode(request, response); });
 
   /* Configure periodic control loop function. */
   _io_loop_timer = create_wall_timer
@@ -262,40 +289,6 @@ void Node::io_loop()
     dynamixel_error_hdl(err.id());
     return;
   }
-}
-
-void Node::set_mode(std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Request> const request,
-                    std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Response> response)
-{
-  /* Check if we have such a servo id registered. */
-  Dynamixel::Id const servo_id = request->servo_id;
-  auto iter = _mx28_ctrl_map.find(servo_id);
-  if (iter == _mx28_ctrl_map.end()) {
-    RCLCPP_ERROR(get_logger(), "no servo with id #%d found.", static_cast<int>(servo_id));
-    response->result = l3xz_ros_dynamixel_bridge::srv::SetMode::Response::SET_MODE_ERROR;
-    return;
-  }
-  auto const servo_ctrl = iter->second;
-  auto const servo_cfg = _mx28_cfg_map.at(servo_ctrl->id());
-
-  /* Obtain the desired operation mode. */
-  if      (request->servo_mode == l3xz_ros_dynamixel_bridge::srv::SetMode::Request::SERVO_MODE_VELOCITY_CONTROL)
-    servo_cfg->op_mode = MX28AR::OperatingMode::VelocityControlMode;
-  else if (request->servo_mode == l3xz_ros_dynamixel_bridge::srv::SetMode::Request::SERVO_MODE_POSITION_CONTROL)
-    servo_cfg->op_mode = MX28AR::OperatingMode::PositionControlMode;
-  else {
-    RCLCPP_ERROR(get_logger(), "invalid value (%d) for parameter op mode.", request->servo_mode);
-    response->result = l3xz_ros_dynamixel_bridge::srv::SetMode::Response::SET_MODE_ERROR;
-    return;
-  }
-
-  /* Perform the desired change in operation mode. */
-  servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  servo_ctrl->setOperatingMode(_mx28_cfg_map.at(servo_id)->op_mode);
-  servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
-
-  /* Set the return code. */
-  response->result = l3xz_ros_dynamixel_bridge::srv::SetMode::Response::SET_MODE_SUCCESS;
 }
 
 /**************************************************************************************

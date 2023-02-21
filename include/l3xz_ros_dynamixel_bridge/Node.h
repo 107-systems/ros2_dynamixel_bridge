@@ -20,7 +20,7 @@
 
 #include <std_msgs/msg/float32.hpp>
 
-#include <l3xz_ros_dynamixel_bridge/srv/set_mode.hpp>
+#include <l3xz_ros_dynamixel_bridge/msg/mode.hpp>
 
 #include "MX28ARSingle.h"
 #include "MX28ARSyncGroup.h"
@@ -46,8 +46,7 @@ private:
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_deg_pub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_vel_sub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_deg_sub;
-
-  rclcpp::Service<l3xz_ros_dynamixel_bridge::srv::SetMode>::SharedPtr _set_mode_srv;
+  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::Mode>::SharedPtr> _mode_sub;
 
   class ServoConfiguration
   {
@@ -73,8 +72,6 @@ private:
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
   rclcpp::TimerBase::SharedPtr _io_loop_timer;
   void io_loop();
-
-  void set_mode(std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Request> const request, std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Response> response);
 };
 
 /**************************************************************************************
