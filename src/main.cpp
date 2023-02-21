@@ -41,6 +41,12 @@ catch (dynamixelplusplus::StatusError const & e)
   std::cerr << "Terminating ..." << std::endl;
   return EXIT_FAILURE;
 }
+catch (rclcpp::exceptions::RCLError const & e)
+{
+  std::cerr << "RCLError caught: " << e.what() << std::endl;
+  std::cerr << "Terminating ..." << std::endl;
+  return EXIT_FAILURE;
+}
 catch (std::runtime_error const & err)
 {
   std::cerr << "Exception (std::runtime_error) caught: " << err.what() << std::endl;

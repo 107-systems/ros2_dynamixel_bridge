@@ -11,7 +11,7 @@
  * INCLUDE
  **************************************************************************************/
 
-#include <tuple>
+#include <map>
 
 #include <dynamixel++/dynamixel++.h>
 
@@ -35,6 +35,7 @@ public:
   SyncGroup(dynamixelplusplus::SharedDynamixel dyn_ctrl,
             dynamixelplusplus::Dynamixel::IdVect const & dyn_id_vect)
   : dynamixelplusplus::SyncGroup{dyn_ctrl, dyn_id_vect}
+  , _dyn_id_vect{dyn_id_vect}
   { }
 
 
@@ -44,7 +45,10 @@ public:
   void setGoalPosition (std::vector<float> const & angle_deg_vect);
   void setGoalVelocity (std::vector<float> const & velocity_rpm_vect);
 
-  std::vector<float> getPresentPosition();
+  std::map<dynamixelplusplus::Dynamixel::Id, float> getPresentPosition();
+
+private:
+  dynamixelplusplus::Dynamixel::IdVect const _dyn_id_vect;
 };
 
 /**************************************************************************************

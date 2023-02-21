@@ -43,25 +43,33 @@ public:
   ~Node();
 
 private:
-  enum class Servo
-  {
-    Coxa_Left_Front,
-    Coxa_Left_Middle,
-    Coxa_Left_Back,
-    Coxa_Right_Front,
-    Coxa_Right_Middle,
-    Coxa_Right_Back,
-    Pan,
-    Tilt,
-  };
-
-  std::map<Servo, float> _target_angular_velocity_dps;
-  std::map<Servo, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_pub;
-  std::map<Servo, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_vel_sub;
+  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_deg_pub;
+  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_vel_sub;
+  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_deg_sub;
 
   rclcpp::Service<l3xz_ros_dynamixel_bridge::srv::SetMode>::SharedPtr _set_mode_srv;
 
-  std::map<Servo, std::shared_ptr<MX28AR::Single>> _mx28_ctrl_map;
+  class ServoConfiguration
+  {
+  public:
+    ServoConfiguration(MX28AR::OperatingMode const op_mode_,
+                       float const initial_target_angle_deg_,
+                       float const target_angular_velocity_dps_,
+                       float const target_angle_deg_)
+    : op_mode{op_mode_}
+    , initial_target_angle_deg{initial_target_angle_deg_}
+    , target_angular_velocity_dps{target_angular_velocity_dps_}
+    , target_angle_deg{target_angle_deg_}
+    { }
+
+    MX28AR::OperatingMode op_mode;
+    float const initial_target_angle_deg;
+    float target_angular_velocity_dps;
+    float target_angle_deg;
+  };
+
+  std::map<dynamixelplusplus::Dynamixel::Id, std::shared_ptr<ServoConfiguration>> _mx28_cfg_map;
+  std::map<dynamixelplusplus::Dynamixel::Id, std::shared_ptr<MX28AR::Single>> _mx28_ctrl_map;
 
   std::shared_ptr<MX28AR::SyncGroup> _mx28_sync_ctrl;
 
@@ -70,7 +78,6 @@ private:
   rclcpp::TimerBase::SharedPtr _io_loop_timer;
   void io_loop();
 
-  void declare_parameter_all();
   void set_mode(std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Request> const request, std::shared_ptr<l3xz_ros_dynamixel_bridge::srv::SetMode::Response> response);
 };
 

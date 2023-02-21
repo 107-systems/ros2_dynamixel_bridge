@@ -77,7 +77,7 @@ void SyncGroup::setGoalVelocity(std::vector<float> const & velocity_rpm_vect)
   write(static_cast<uint16_t>(ControlTable::GoalVelocity), raw_goal_velocity_vect);
 }
 
-std::vector<float> SyncGroup::getPresentPosition()
+std::map<dynamixelplusplus::Dynamixel::Id, float> SyncGroup::getPresentPosition()
 {
   std::vector<uint32_t> const angle_raw_vect = read<uint32_t>(static_cast<uint16_t>(ControlTable::PresentPosition));
 
@@ -87,7 +87,13 @@ std::vector<float> SyncGroup::getPresentPosition()
   for (auto angle_raw : angle_raw_vect)
     angle_deg_vect.push_back(fromRegValue(angle_raw));
 
-  return angle_deg_vect;
+  assert(_dyn_id_vect.size() == angle_deg_vect.size());
+
+  std::map<dynamixelplusplus::Dynamixel::Id, float> angle_deg_map;
+  for (size_t i = 0; i < _dyn_id_vect.size(); i++)
+    angle_deg_map[_dyn_id_vect.at(i)] = angle_deg_vect.at(i);
+
+  return angle_deg_map;
 }
 
 /**************************************************************************************
