@@ -96,7 +96,7 @@ Node::Node()
     for (auto const start = std::chrono::system_clock::now();
          (std::chrono::system_clock::now() - start) < std::chrono::seconds(5) && !target_angle_reached;)
     {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
       actual_angle_deg = servo_ctrl->getPresentPosition();
       static float constexpr
