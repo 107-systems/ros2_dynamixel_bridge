@@ -51,21 +51,18 @@ Node::Node()
   /* Create a map for individually controlling all the servos as well as all publishers and subscribers. */
   for (auto servo_id : dyn_id_vect)
   {
-    _mx28_mode_map[servo_id] = MX28AR::OperatingMode::PositionControlMode;
+    auto servo_ctrl   = std::make_shared<MX28AR::Single>(dyn_ctrl, servo_id);
+    auto servo_config = std::make_shared<ServoConfig>();
+    auto servo_target = std::make_shared<ServoTarget>(0.0f, servo_ctrl->getPresentPosition());
 
-    auto servo_ctrl = std::make_shared<MX28AR::Single>(dyn_ctrl, servo_id);
-    _mx28_ctrl_map[servo_id] = servo_ctrl;
+    _mx28_map[servo_id] = ServoMapValue{servo_ctrl, servo_config, servo_target};
 
     /* Reboot all servo to start from a clean slate. */
     servo_ctrl->reboot();
     /* Wait a little so we can be sure that all servos are online again. */
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-
-    /* Configure initial velocity and target angle. */
-    _target_angle_deg_map           [servo_id] = servo_ctrl->getPresentPosition();
-    _target_angular_velocity_dps_map[servo_id] = 0.0f;
-
+    /* Automagically create ROS topics for Publishers and Subscribers. */
     std::stringstream
       angle_deg_pub_topic,
       angle_deg_sub_topic,
@@ -78,9 +75,10 @@ Node::Node()
     mode_sub_topic      << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/mode/set";
 
     RCLCPP_INFO(get_logger(),
-                "initialize servo #%d\n\tInit. Pos. = %0.2f\n\tPub:       = %s\n\tSub:       = %s\n\tSub:       = %s\n\tSub:       = %s",
+                "initialize servo #%d\n\tInit. Pos. = %0.2f\n\tInit. Vel. = %0.2f\n\tPub:       = %s\n\tSub:       = %s\n\tSub:       = %s\n\tSub:       = %s",
                 static_cast<int>(servo_id),
-                _target_angle_deg_map.at(servo_id),
+                servo_target->angle_deg(),
+                servo_target->angular_velocity_dps(),
                 angle_deg_pub_topic.str().c_str(),
                 angle_deg_sub_topic.str().c_str(),
                 angle_vel_sub_topic.str().c_str(),
@@ -96,26 +94,26 @@ Node::Node()
     _angle_deg_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
       (angle_deg_sub_topic.str(),
        1,
-       [this, servo_id](std_msgs::msg::Float32::SharedPtr const msg)
+       [this, servo_target](std_msgs::msg::Float32::SharedPtr const msg)
        {
-         _target_angle_deg_map[servo_id] = msg->data * 180.0f / M_PI;
+         servo_target->set_angle_deg(msg->data * 180.0f / M_PI);
        });
 
     _angle_vel_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
       (angle_vel_sub_topic.str(),
        1,
-       [this, servo_id](std_msgs::msg::Float32::SharedPtr const msg)
+       [this, servo_target](std_msgs::msg::Float32::SharedPtr const msg)
        {
-         _target_angular_velocity_dps_map[servo_id] = msg->data * 180.0f / M_PI;
+         servo_target->set_angular_velocity_dps(msg->data * 180.0f / M_PI);
        });
 
     _mode_sub[servo_id] = create_subscription<l3xz_ros_dynamixel_bridge::msg::Mode>
       (mode_sub_topic.str(),
        1,
-       [this, servo_id, servo_ctrl](l3xz_ros_dynamixel_bridge::msg::Mode::SharedPtr const msg)
+       [this, servo_config, servo_ctrl](l3xz_ros_dynamixel_bridge::msg::Mode::SharedPtr const msg)
        {
          /* Obtain the desired operation mode. */
-         MX28AR::OperatingMode next_op_mode = _mx28_mode_map.at(servo_id);
+         MX28AR::OperatingMode next_op_mode = servo_config->mode();
 
          if      (msg->servo_mode == l3xz_ros_dynamixel_bridge::msg::Mode::SERVO_MODE_VELOCITY_CONTROL)
            next_op_mode = MX28AR::OperatingMode::VelocityControlMode;
@@ -127,14 +125,14 @@ Node::Node()
          }
 
          /* Only configure the servo if the operational mode has changed. */
-         if (next_op_mode != _mx28_mode_map.at(servo_id))
+         if (next_op_mode != servo_config->mode())
          {
-           _mx28_mode_map[servo_id] = next_op_mode;
+           servo_config->set_mode(next_op_mode);
 
-           RCLCPP_INFO(get_logger(), "servo #%d is set to mode %d.", static_cast<int>(servo_id) , static_cast<int>(_mx28_mode_map.at(servo_id)));
+           RCLCPP_INFO(get_logger(), "servo #%d is set to mode %d.", static_cast<int>(servo_ctrl->id()) , static_cast<int>(servo_config->mode()));
 
            servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-           servo_ctrl->setOperatingMode(_mx28_mode_map.at(servo_id));
+           servo_ctrl->setOperatingMode(servo_config->mode());
            servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
          }
        });
@@ -180,17 +178,18 @@ void Node::io_loop()
   auto dynamixel_error_hdl = [this](Dynamixel::Id const err_id)
   {
     RCLCPP_ERROR(get_logger(), "hardware alert for servo #%d caught.", static_cast<int>(err_id));
-    auto iter = _mx28_ctrl_map.find(err_id);
-    if (iter == _mx28_ctrl_map.end()) {
+    auto iter = _mx28_map.find(err_id);
+    if (iter == _mx28_map.end()) {
       RCLCPP_ERROR(get_logger(), "no servo with id #%d found.", static_cast<int>(err_id));
       return;
     }
-    auto const servo_ctrl = iter->second;
+    auto const servo_ctrl = iter->second.ctrl;
+    auto const servo_cfg  = iter->second.cfg;
     uint8_t const hw_err_code = servo_ctrl->getHardwareErrorCode();
     RCLCPP_ERROR(get_logger(), "\thardware error code for servo #%d caught: %02X", static_cast<int>(servo_ctrl->id()), hw_err_code);
     servo_ctrl->reboot();
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-    servo_ctrl->setOperatingMode(_mx28_mode_map.at(err_id));
+    servo_ctrl->setOperatingMode(servo_cfg->mode());
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
     servo_ctrl->setGoalVelocity (0.0f);
   };
@@ -220,13 +219,15 @@ void Node::io_loop()
 
   /* Calculate RPMs and limit them for all servos. ************************************/
   std::map<Dynamixel::Id, float> target_velocity_rpm_map;
-  for (auto [servo_id, servo_cfg] : _mx28_mode_map)
+  for (auto [servo_id, servo] : _mx28_map)
   {
+    auto servo_target = servo.target;
+
     static float constexpr DEADZONE_RPM = 1.0f;
     static float constexpr DPS_per_RPM = 360.0f / 60.0f;
 
     float const actual_angle_deg    = actual_angle_deg_map.at(servo_id);
-    float const target_velocity_dps = _target_angular_velocity_dps_map.at(servo_id);
+    float const target_velocity_dps = servo_target->angular_velocity_dps();
     float       target_velocity_rpm = target_velocity_dps / DPS_per_RPM;
 
     /* Checking if the target velocity exceeds the configured dead-zone.
@@ -262,7 +263,11 @@ void Node::io_loop()
 
   /* Write the computed angle values to the servos. ***********************************/
   try {
-    _mx28_sync_ctrl->setGoalPosition(_target_angle_deg_map);
+    std::map<Dynamixel::Id, float> target_angle_deg_map;
+    for (auto [servo_id, servo] : _mx28_map)
+      target_angle_deg_map[servo_id] = servo.target->angle_deg();
+
+    _mx28_sync_ctrl->setGoalPosition(target_angle_deg_map);
   }
   catch (dynamixelplusplus::HardwareAlert const & err) {
     dynamixel_error_hdl(err.id());

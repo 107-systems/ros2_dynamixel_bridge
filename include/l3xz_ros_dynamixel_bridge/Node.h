@@ -48,10 +48,39 @@ private:
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_deg_sub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::Mode>::SharedPtr> _mode_sub;
 
-  std::map<dynamixelplusplus::Dynamixel::Id, std::shared_ptr<MX28AR::Single>> _mx28_ctrl_map;
-  std::map<dynamixelplusplus::Dynamixel::Id, MX28AR::OperatingMode> _mx28_mode_map;
-  std::map<dynamixelplusplus::Dynamixel::Id, float> _target_angular_velocity_dps_map,
-                                                    _target_angle_deg_map;
+  class ServoConfig
+  {
+  private:
+    MX28AR::OperatingMode _mode;
+  public:
+    ServoConfig() : _mode{MX28AR::OperatingMode::PositionControlMode} { }
+    [[nodiscard]] MX28AR::OperatingMode mode() const { return _mode; }
+    void set_mode(MX28AR::OperatingMode const mode) { _mode = mode; }
+  };
+
+  class ServoTarget
+  {
+  private:
+    float _target_angular_velocity_dps, _target_angle_deg;
+  public:
+    ServoTarget(float const target_angular_velocity_dps,
+                float const target_angle_deg)
+    : _target_angular_velocity_dps{target_angular_velocity_dps}
+    , _target_angle_deg{target_angle_deg} { }
+    [[nodiscard]] float angular_velocity_dps() const { return _target_angular_velocity_dps; }
+    [[nodiscard]] float angle_deg() const { return _target_angle_deg; }
+    void set_angular_velocity_dps(float const ang_vel) { _target_angular_velocity_dps = ang_vel; }
+    void set_angle_deg(float const ang_deg) { _target_angle_deg = ang_deg; }
+  };
+
+  typedef struct
+  {
+    std::shared_ptr<MX28AR::Single> ctrl;
+    std::shared_ptr<ServoConfig> cfg;
+    std::shared_ptr<ServoTarget> target;
+  } ServoMapValue;
+
+  std::map<dynamixelplusplus::Dynamixel::Id, ServoMapValue> _mx28_map;
 
   std::shared_ptr<MX28AR::SyncGroup> _mx28_sync_ctrl;
 
