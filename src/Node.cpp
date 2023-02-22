@@ -229,11 +229,15 @@ void Node::io_loop()
   try {
     actual_angle_deg_map = _mx28_sync_ctrl->getPresentPosition();
   }
-  catch (dynamixelplusplus::HardwareAlert const & err)
-  {
+  catch (dynamixelplusplus::HardwareAlert const & err) {
     dynamixel_error_hdl(err.id());
     return;
   }
+  catch (dynamixelplusplus::StatusError const & e) {
+    RCLCPP_ERROR(get_logger(), "StatusError caught: %s", e.what());
+    return;
+  }
+
 
   /* Publish the current position via various ROS topics (one per joint). *************/
   for (auto [servo_id, angle_deg] : actual_angle_deg_map)
@@ -264,9 +268,9 @@ void Node::io_loop()
     /* Checking current head position and stopping if either
      * pan or tilt angle would exceed the maximum allowed angle.
      */
-    if ((actual_angle_deg < 160.0f) && (target_velocity_dps < 0.0f))
+    if ((actual_angle_deg < 140.0f) && (target_velocity_dps < 0.0f))
       target_velocity_rpm = 0.0f;
-    if ((actual_angle_deg > 200.0f) && (target_velocity_dps > 0.0f))
+    if ((actual_angle_deg > 220.0f) && (target_velocity_dps > 0.0f))
       target_velocity_rpm = 0.0f;
 
     target_velocity_rpm_map[servo_id] = target_velocity_rpm;
@@ -280,6 +284,10 @@ void Node::io_loop()
     dynamixel_error_hdl(err.id());
     return;
   }
+  catch (dynamixelplusplus::StatusError const & e) {
+    RCLCPP_ERROR(get_logger(), "StatusError caught: %s", e.what());
+    return;
+  }
 
   /* Write the computed angle values to the servos. ***********************************/
   try {
@@ -287,6 +295,10 @@ void Node::io_loop()
   }
   catch (dynamixelplusplus::HardwareAlert const & err) {
     dynamixel_error_hdl(err.id());
+    return;
+  }
+  catch (dynamixelplusplus::StatusError const & e) {
+    RCLCPP_ERROR(get_logger(), "StatusError caught: %s", e.what());
     return;
   }
 }
