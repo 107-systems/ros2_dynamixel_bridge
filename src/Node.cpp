@@ -91,33 +91,6 @@ Node::Node()
     servo_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 
-    float const target_angle_deg = servo_cfg->initial_target_angle_deg;
-    servo_ctrl->setGoalPosition(target_angle_deg);
-
-    bool target_angle_reached = false;
-    float actual_angle_deg = 0.0f;
-    for (auto const start = std::chrono::system_clock::now();
-         (std::chrono::system_clock::now() - start) < std::chrono::seconds(5) && !target_angle_reached;)
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-      actual_angle_deg = servo_ctrl->getPresentPosition();
-      static float constexpr
-      INITIAL_ANGLE_EPSILON_deg = 2.0f;
-      target_angle_reached = fabs(actual_angle_deg - target_angle_deg) < INITIAL_ANGLE_EPSILON_deg;
-    }
-
-    if (!target_angle_reached)
-    {
-      RCLCPP_ERROR(get_logger(),
-                   "could not reach initial position for servo #%d, target: %0.2f, actual: %0.2f.",
-                   static_cast<int>(servo_id),
-                   target_angle_deg,
-                   actual_angle_deg);
-      rclcpp::shutdown();
-      return;
-    }
-
     /* Create per-servo publisher/subscriber. */
     _angle_deg_pub[servo_id] = this->create_publisher<std_msgs::msg::Float32>(angle_deg_pub_topic.str(), 1);
 
