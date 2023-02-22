@@ -14,15 +14,5 @@ def generate_launch_description():
           {'serial_port' : '/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT4NNZ55-if00-port0'},
           {'serial_port_baudrate': 2*1000*1000},
       ],
-      remappings=[
-          ('/l3xz/dynamixel/servo_7/angle/actual',            '/l3xz/head/pan/angle/actual'),
-          ('/l3xz/dynamixel/servo_7/angle/target',            '/l3xz/head/pan/angle/target'),
-          ('/l3xz/dynamixel/servo_7/angular_velocity/target', '/l3xz/head/pan/angular_velocity/target'),
-          ('/l3xz/dynamixel/servo_7/mode/set',                '/l3xz/head/pan/mode/set'),
-          ('/l3xz/dynamixel/servo_8/angle/actual',            '/l3xz/head/tilt/angle/actual'),
-          ('/l3xz/dynamixel/servo_8/angle/target',            '/l3xz/head/tilt/angle/target'),
-          ('/l3xz/dynamixel/servo_8/angular_velocity/target', '/l3xz/head/tilt/angular_velocity/target'),
-          ('/l3xz/dynamixel/servo_8/mode/set',                '/l3xz/head/tilt/mode/set'),
-      ]
     )
   ])

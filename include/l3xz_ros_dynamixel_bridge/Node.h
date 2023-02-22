@@ -48,21 +48,8 @@ private:
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_deg_sub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::Mode>::SharedPtr> _mode_sub;
 
-  class ServoConfiguration
-  {
-  public:
-    ServoConfiguration(MX28AR::OperatingMode const op_mode_,
-                       float const initial_target_angle_deg_)
-    : op_mode{op_mode_}
-    , initial_target_angle_deg{initial_target_angle_deg_}
-    { }
-
-    MX28AR::OperatingMode op_mode;
-    float const initial_target_angle_deg;
-  };
-
-  std::map<dynamixelplusplus::Dynamixel::Id, std::shared_ptr<ServoConfiguration>> _mx28_cfg_map;
   std::map<dynamixelplusplus::Dynamixel::Id, std::shared_ptr<MX28AR::Single>> _mx28_ctrl_map;
+  std::map<dynamixelplusplus::Dynamixel::Id, MX28AR::OperatingMode> _mx28_mode_map;
   std::map<dynamixelplusplus::Dynamixel::Id, float> _target_angular_velocity_dps_map,
                                                     _target_angle_deg_map;
 
