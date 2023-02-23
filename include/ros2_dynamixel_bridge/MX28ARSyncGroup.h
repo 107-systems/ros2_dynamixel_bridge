@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2022 LXRobotics GmbH.
  * Author: Alexander Entinger <alexander.entinger@lxrobotics.com>
- * Contributors: https://github.com/107-systems/l3xz_ros_dynamixel_bridge/graphs/contributors.
+ * Contributors: https://github.com/107-systems/ros2_dynamixel_bridge/graphs/contributors.
  */
 
 #ifndef L3XZ_HEAD_CTRL_MX28ARCONTROL_H

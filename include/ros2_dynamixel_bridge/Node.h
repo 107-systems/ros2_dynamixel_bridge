@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2022 LXRobotics GmbH.
  * Author: Alexander Entinger <alexander.entinger@lxrobotics.com>
- * Contributors: https://github.com/107-systems/l3xz_ros_dynamixel_bridge/graphs/contributors.
+ * Contributors: https://github.com/107-systems/ros2_dynamixel_bridge/graphs/contributors.
  */
 
 #ifndef L3XZ_HEAD_CTRL_NODE_H_
@@ -20,7 +20,7 @@
 
 #include <std_msgs/msg/float32.hpp>
 
-#include <l3xz_ros_dynamixel_bridge/msg/mode.hpp>
+#include <ros2_dynamixel_bridge/msg/mode.hpp>
 
 #include "MX28ARSingle.h"
 #include "MX28ARSyncGroup.h"
@@ -46,7 +46,7 @@ private:
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_deg_pub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_vel_sub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_deg_sub;
-  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<l3xz_ros_dynamixel_bridge::msg::Mode>::SharedPtr> _mode_sub;
+  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<ros2_dynamixel_bridge::msg::Mode>::SharedPtr> _mode_sub;
 
   class ServoConfig
   {

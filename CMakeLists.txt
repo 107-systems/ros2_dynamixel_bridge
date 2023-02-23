@@ -1,7 +1,7 @@
 #######################################################################################
 cmake_minimum_required(VERSION 3.8)
 #######################################################################################
-project(l3xz_ros_dynamixel_bridge)
+project(ros2_dynamixel_bridge)
 set(L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET ${PROJECT_NAME}_node)
 #######################################################################################
 find_package(ament_cmake REQUIRED)

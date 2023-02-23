@@ -1,10 +1,10 @@
 <a href="https://107-systems.org/"><img align="right" src="https://raw.githubusercontent.com/107-systems/.github/main/logo/107-systems.png" width="15%"></a>
-:floppy_disk: `l3xz_ros_dynamixel_bridge`
-=========================================
-[![Build Status](https://github.com/107-systems/l3xz_ros_dynamixel_bridge/actions/workflows/ros2.yml/badge.svg)](https://github.com/107-systems/l3xz_ros_dynamixel_bridge/actions/workflows/ros2.yml)
-[![Spell Check status](https://github.com/107-systems/l3xz_ros_dynamixel_bridge/actions/workflows/spell-check.yml/badge.svg)](https://github.com/107-systems/l3xz_ros_dynamixel_bridge/actions/workflows/spell-check.yml)
+:floppy_disk: `ros2_dynamixel_bridge`
+=====================================
+[![Build Status](https://github.com/107-systems/ros2_dynamixel_bridge/actions/workflows/ros2.yml/badge.svg)](https://github.com/107-systems/ros2_dynamixel_bridge/actions/workflows/ros2.yml)
+[![Spell Check status](https://github.com/107-systems/ros2_dynamixel_bridge/actions/workflows/spell-check.yml/badge.svg)](https://github.com/107-systems/ros2_dynamixel_bridge/actions/workflows/spell-check.yml)
 
-This package provides the interface between [ROS](https://github.com/ros2) and [L3X-Z](https://github.com/107-systems/l3xz)'s Robotis Dynamixel servos.
+This package provides the interface between [ROS2](https://github.com/ros2) and Robotis Dynamixel servos.
 
 <p align="center">
   <a href="https://github.com/107-systems/l3xz"><img src="https://raw.githubusercontent.com/107-systems/.github/main/logo/l3xz-logo-memento-mori-github.png" width="40%"></a>
@@ -12,15 +12,15 @@ This package provides the interface between [ROS](https://github.com/ros2) and [
 
 #### How-to-build
 ```bash
-colcon_ws/src$ git clone --recursive https://github.com/107-systems/l3xz_ros_dynamixel_bridge
+colcon_ws/src$ git clone --recursive https://github.com/107-systems/ros2_dynamixel_bridge
 colcon_ws$ source /opt/ros/galactic/setup.bash
-colcon_ws$ colcon build --packages-select l3xz_ros_dynamixel_bridge
+colcon_ws$ colcon build --packages-select ros2_dynamixel_bridge
 ```
 
 #### How-to-run
 ```bash
 colcon_ws$ . install/setup.bash
-colcon_ws$ ros2 launch l3xz_ros_dynamixel_bridge bridge.py
+colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge.py
 ```
 
 #### Interface Documentation

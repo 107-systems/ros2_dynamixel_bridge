@@ -1,14 +1,14 @@
 /**
  * Copyright (c) 2022 LXRobotics GmbH.
  * Author: Alexander Entinger <alexander.entinger@lxrobotics.com>
- * Contributors: https://github.com/107-systems/l3xz_ros_dynamixel_bridge/graphs/contributors.
+ * Contributors: https://github.com/107-systems/ros2_dynamixel_bridge/graphs/contributors.
  */
 
 /**************************************************************************************
  * INCLUDE
  **************************************************************************************/
 
-#include <l3xz_ros_dynamixel_bridge/Node.h>
+#include <ros2_dynamixel_bridge/Node.h>
 
 /**************************************************************************************
  * NAMESPACE
@@ -24,7 +24,7 @@ using namespace dynamixelplusplus;
  **************************************************************************************/
 
 Node::Node()
-: rclcpp::Node("l3xz_ros_dynamixel_bridge")
+: rclcpp::Node("ros2_dynamixel_bridge")
 , _prev_io_loop_timepoint{std::chrono::steady_clock::now()}
 {
   /* Declare parameter. */
@@ -132,17 +132,17 @@ Node::Node()
          servo_target->set_angular_velocity_dps(msg->data * 180.0f / M_PI);
        });
 
-    _mode_sub[servo_id] = create_subscription<l3xz_ros_dynamixel_bridge::msg::Mode>
+    _mode_sub[servo_id] = create_subscription<ros2_dynamixel_bridge::msg::Mode>
       (mode_sub_topic.str(),
        1,
-       [this, servo_config, servo_ctrl](l3xz_ros_dynamixel_bridge::msg::Mode::SharedPtr const msg)
+       [this, servo_config, servo_ctrl](ros2_dynamixel_bridge::msg::Mode::SharedPtr const msg)
        {
          /* Obtain the desired operation mode. */
          MX28AR::OperatingMode next_op_mode = servo_config->mode();
 
-         if      (msg->servo_mode == l3xz_ros_dynamixel_bridge::msg::Mode::SERVO_MODE_VELOCITY_CONTROL)
+         if      (msg->servo_mode == ros2_dynamixel_bridge::msg::Mode::SERVO_MODE_VELOCITY_CONTROL)
            next_op_mode = MX28AR::OperatingMode::VelocityControlMode;
-         else if (msg->servo_mode == l3xz_ros_dynamixel_bridge::msg::Mode::SERVO_MODE_POSITION_CONTROL)
+         else if (msg->servo_mode == ros2_dynamixel_bridge::msg::Mode::SERVO_MODE_POSITION_CONTROL)
            next_op_mode = MX28AR::OperatingMode::PositionControlMode;
          else {
            RCLCPP_ERROR(get_logger(), "invalid value (%d) for parameter op mode.", static_cast<int>(msg->servo_mode));
