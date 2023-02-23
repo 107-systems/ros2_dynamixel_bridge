@@ -1,14 +1,14 @@
 /**
  * Copyright (c) 2022 LXRobotics GmbH.
  * Author: Alexander Entinger <alexander.entinger@lxrobotics.com>
- * Contributors: https://github.com/107-systems/l3xz_ros_dynamixel_bridge/graphs/contributors.
+ * Contributors: https://github.com/107-systems/ros2_dynamixel_bridge/graphs/contributors.
  */
 
 /**************************************************************************************
  * INCLUDE
  **************************************************************************************/
 
-#include <l3xz_ros_dynamixel_bridge/MX28ARSyncGroup.h>
+#include <ros2_dynamixel_bridge/MX28ARSyncGroup.h>
 
 #include <assert.h>
 
@@ -33,7 +33,7 @@ void SyncGroup::setOperatingMode(OperatingMode const operating_mode)
   write(static_cast<uint16_t>(ControlTable::OperatingMode), static_cast<uint8_t>(operating_mode));
 }
 
-void SyncGroup::setGoalPosition(std::vector<float> const & angle_deg_vect)
+void SyncGroup::setGoalPosition(std::map<dynamixelplusplus::Dynamixel::Id, float> const & angle_deg_map)
 {
   auto limit_angle = [](float const angle_deg)
   {
@@ -45,13 +45,15 @@ void SyncGroup::setGoalPosition(std::vector<float> const & angle_deg_vect)
   auto toRegValue = [](float const angle_deg) { return static_cast<uint32_t>((angle_deg * 4096.0f) / 360.0f); };
 
   std::vector<uint32_t> raw_goal_position_vect;
-  for (auto angle_deg : angle_deg_vect)
+  for (auto [id, angle_deg] : angle_deg_map)
     raw_goal_position_vect.push_back(toRegValue(limit_angle(angle_deg)));
+
+  assert(raw_goal_position_vect.size() == _dyn_id_vect.size());
 
   write(static_cast<uint16_t>(ControlTable::GoalPosition), raw_goal_position_vect);
 }
 
-void SyncGroup::setGoalVelocity(std::vector<float> const & velocity_rpm_vect)
+void SyncGroup::setGoalVelocity(std::map<dynamixelplusplus::Dynamixel::Id, float> const & velocity_rpm_map)
 {
   static float const RPM_per_LSB = 0.229f;
   static float const MAX_VELOCITY_rpm = RPM_per_LSB * 1023.0f;
@@ -71,13 +73,15 @@ void SyncGroup::setGoalVelocity(std::vector<float> const & velocity_rpm_vect)
   };
 
   std::vector<uint32_t> raw_goal_velocity_vect;
-  for (auto vel_rpm : velocity_rpm_vect)
+  for (auto [id, vel_rpm] : velocity_rpm_map)
     raw_goal_velocity_vect.push_back(toRegValue(limit_velocity(vel_rpm)));
+
+  assert(raw_goal_velocity_vect.size() == _dyn_id_vect.size());
 
   write(static_cast<uint16_t>(ControlTable::GoalVelocity), raw_goal_velocity_vect);
 }
 
-std::vector<float> SyncGroup::getPresentPosition()
+std::map<dynamixelplusplus::Dynamixel::Id, float> SyncGroup::getPresentPosition()
 {
   std::vector<uint32_t> const angle_raw_vect = read<uint32_t>(static_cast<uint16_t>(ControlTable::PresentPosition));
 
@@ -87,7 +91,13 @@ std::vector<float> SyncGroup::getPresentPosition()
   for (auto angle_raw : angle_raw_vect)
     angle_deg_vect.push_back(fromRegValue(angle_raw));
 
-  return angle_deg_vect;
+  assert(_dyn_id_vect.size() == angle_deg_vect.size());
+
+  std::map<dynamixelplusplus::Dynamixel::Id, float> angle_deg_map;
+  for (size_t i = 0; i < _dyn_id_vect.size(); i++)
+    angle_deg_map[_dyn_id_vect.at(i)] = angle_deg_vect.at(i);
+
+  return angle_deg_map;
 }
 
 /**************************************************************************************

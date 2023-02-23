@@ -1,7 +1,7 @@
 /**
  * Copyright (c) 2022 LXRobotics GmbH.
  * Author: Alexander Entinger <alexander.entinger@lxrobotics.com>
- * Contributors: https://github.com/107-systems/l3xz_ros_dynamixel_bridge/graphs/contributors.
+ * Contributors: https://github.com/107-systems/ros2_dynamixel_bridge/graphs/contributors.
  */
 
 #ifndef L3XZ_HEAD_CTRL_MX28ARCONTROL_H
@@ -11,7 +11,7 @@
  * INCLUDE
  **************************************************************************************/
 
-#include <tuple>
+#include <map>
 
 #include <dynamixel++/dynamixel++.h>
 
@@ -35,16 +35,20 @@ public:
   SyncGroup(dynamixelplusplus::SharedDynamixel dyn_ctrl,
             dynamixelplusplus::Dynamixel::IdVect const & dyn_id_vect)
   : dynamixelplusplus::SyncGroup{dyn_ctrl, dyn_id_vect}
+  , _dyn_id_vect{dyn_id_vect}
   { }
 
 
   /* MEMBER FUNCTIONS *****************************************************************/
   void setTorqueEnable (TorqueEnable const torque_enable);
   void setOperatingMode(OperatingMode const operating_mode);
-  void setGoalPosition (std::vector<float> const & angle_deg_vect);
-  void setGoalVelocity (std::vector<float> const & velocity_rpm_vect);
+  void setGoalPosition (std::map<dynamixelplusplus::Dynamixel::Id, float> const & angle_deg_map);
+  void setGoalVelocity (std::map<dynamixelplusplus::Dynamixel::Id, float> const & velocity_rpm_map);
 
-  std::vector<float> getPresentPosition();
+  std::map<dynamixelplusplus::Dynamixel::Id, float> getPresentPosition();
+
+private:
+  dynamixelplusplus::Dynamixel::IdVect const _dyn_id_vect;
 };
 
 /**************************************************************************************
