@@ -27,24 +27,24 @@ colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge.py
 ##### Subscribed Topics
 | Default name | Type | Description |
 |:-:|:-:|:-:|
-| `/l3xz/dynamixel/servo_1/angle/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** target angle / rad |
-| `/l3xz/dynamixel/servo_1/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** target angular velocity / rad/sec |
-| `/l3xz/dynamixel/servo_1/mode/set` | [`msg/Mode.msg`](msg/Mode.msg) |  Servo **#1** operation mode (Position Control / Angular Velocity Control) |
-| `/l3xz/dynamixel/servo_2/angle/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#2** target angle / rad |
-| `/l3xz/dynamixel/servo_2/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#2** target angular velocity / rad/sec |
-| `/l3xz/dynamixel/servo_2/mode/set` | [`msg/Mode.msg`](msg/Mode.msg) |  Servo **#2** operation mode (Position Control / Angular Velocity Control) |
+| `/dynamixel/servo_1/angle/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** target angle / rad |
+| `/dynamixel/servo_1/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** target angular velocity / rad/sec |
+| `/dynamixel/servo_1/mode/set` | [`msg/Mode.msg`](msg/Mode.msg) |  Servo **#1** operation mode (Position Control / Angular Velocity Control) |
+| `/dynamixel/servo_2/angle/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#2** target angle / rad |
+| `/dynamixel/servo_2/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#2** target angular velocity / rad/sec |
+| `/dynamixel/servo_2/mode/set` | [`msg/Mode.msg`](msg/Mode.msg) |  Servo **#2** operation mode (Position Control / Angular Velocity Control) |
 | ... | ... | ... |
-| `/l3xz/dynamixel/servo_n/angle/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#n** target angle / rad |
-| `/l3xz/dynamixel/servo_n/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#n** target angular velocity / rad/sec |
-| `/l3xz/dynamixel/servo_n/mode/set` | [`msg/Mode.msg`](msg/Mode.msg) |  Servo **#n** operation mode (Position Control / Angular Velocity Control) |
+| `/dynamixel/servo_n/angle/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#n** target angle / rad |
+| `/dynamixel/servo_n/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#n** target angular velocity / rad/sec |
+| `/dynamixel/servo_n/mode/set` | [`msg/Mode.msg`](msg/Mode.msg) |  Servo **#n** operation mode (Position Control / Angular Velocity Control) |
 
 ##### Published Topics
 | Default name | Type | Description |
 |:-:|:-:|:-:|
-| `/l3xz/dynamixel/servo_1/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad |
-| `/l3xz/dynamixel/servo_2/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad |
+| `/dynamixel/servo_1/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad |
+| `/dynamixel/servo_2/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad |
 | ... | ... | ... |
-| `/l3xz/dynamixel/servo_n/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#n** current angle / rad |
+| `/dynamixel/servo_n/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#n** current angle / rad |
 
 ##### Parameters
 | Name | Default | Description |

@@ -94,10 +94,10 @@ Node::Node()
       angle_vel_sub_topic,
       mode_sub_topic;
 
-    angle_deg_pub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/actual";
-    angle_deg_sub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/target";
-    angle_vel_sub_topic << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/angular_velocity/target";
-    mode_sub_topic      << "/l3xz/dynamixel/servo_" << static_cast<int>(servo_id) << "/mode/set";
+    angle_deg_pub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/actual";
+    angle_deg_sub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/target";
+    angle_vel_sub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angular_velocity/target";
+    mode_sub_topic      << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/mode/set";
 
     RCLCPP_INFO(get_logger(),
                 "initialize servo #%d\n\tInit. Pos. = %0.2f\n\tInit. Vel. = %0.2f\n\tPub:       = %s\n\tSub:       = %s\n\tSub:       = %s\n\tSub:       = %s",
