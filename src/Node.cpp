@@ -251,7 +251,6 @@ void Node::io_loop()
     static float constexpr DEADZONE_RPM = 1.0f;
     static float constexpr DPS_per_RPM = 360.0f / 60.0f;
 
-    float const actual_angle_deg    = actual_angle_deg_map.at(servo_id);
     float const target_velocity_dps = servo_target->angular_velocity_dps();
     float       target_velocity_rpm = target_velocity_dps / DPS_per_RPM;
 
@@ -260,14 +259,6 @@ void Node::io_loop()
      * otherwise very slow drift can occur.
      */
     if (fabs(target_velocity_rpm) < DEADZONE_RPM)
-      target_velocity_rpm = 0.0f;
-
-    /* Checking current head position and stopping if either
-     * pan or tilt angle would exceed the maximum allowed angle.
-     */
-    if ((actual_angle_deg < 140.0f) && (target_velocity_dps < 0.0f))
-      target_velocity_rpm = 0.0f;
-    if ((actual_angle_deg > 220.0f) && (target_velocity_dps > 0.0f))
       target_velocity_rpm = 0.0f;
 
     target_velocity_rpm_map[servo_id] = target_velocity_rpm;
