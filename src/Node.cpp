@@ -48,6 +48,31 @@ Node::Node()
     dyn_id_list << static_cast<int>(id) << " ";
   RCLCPP_INFO(get_logger(), "detected Dynamixel MX-28AR: { %s}.", dyn_id_list.str().c_str());
 
+  /* Optionally check if all required node ids are online. */
+  declare_parameter("required_node_id_list", std::vector<long int>{});
+  declare_parameter("check_required_node_id_list", false);
+
+  if (get_parameter("check_required_node_id_list").as_bool())
+  {
+    RCLCPP_INFO(get_logger(), "checking if all required servos are online ...");
+
+    std::vector<long int> const required_node_id_list = get_parameter("required_node_id_list").as_integer_array();
+
+    bool all_servos_online = true;
+    std::stringstream offline_id_list;
+    for (auto servo_id : required_node_id_list)
+      if (std::none_of(std::cbegin(dyn_id_vect), std::cend(dyn_id_vect), [servo_id, &all_servos_online, &offline_id_list](int const id) { return (static_cast<Dynamixel::Id>(id) == servo_id); }))
+      {
+        offline_id_list << servo_id << " ";
+        all_servos_online = false;
+      }
+    if (!all_servos_online) {
+      RCLCPP_ERROR(get_logger(), "one or more MX-28AR OFF-line: { %s}, shutting down.", offline_id_list.str().c_str());
+      rclcpp::shutdown();
+      return;
+    }
+  }
+
   /* Create a map for individually controlling all the servos as well as all publishers and subscribers. */
   for (auto servo_id : dyn_id_vect)
   {
