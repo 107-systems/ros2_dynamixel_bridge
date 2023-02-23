@@ -238,7 +238,7 @@ void Node::io_loop()
   for (auto [servo_id, angle_deg] : actual_angle_deg_map)
   {
     std_msgs::msg::Float32 msg;
-    msg.data = angle_deg;
+    msg.data = angle_deg * M_PI / 180.0f;
     _angle_deg_pub.at(servo_id)->publish(msg);
   };
 
