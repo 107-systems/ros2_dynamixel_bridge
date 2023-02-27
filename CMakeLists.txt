@@ -11,6 +11,10 @@ find_package(rosidl_default_generators REQUIRED)
 #######################################################################################
 add_subdirectory(external/libdynamixelplusplus)
 #######################################################################################
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Mode.msg"
+)
+#######################################################################################
 include_directories(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET}
   include
 )
@@ -28,13 +32,9 @@ endif()
 #######################################################################################
 target_compile_features(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} PRIVATE cxx_std_17)
 #######################################################################################
-target_link_libraries(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} dynamixel++)
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 #######################################################################################
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Mode.msg"
-)
-#######################################################################################
-rosidl_target_interfaces(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+target_link_libraries(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} dynamixel++ ${cpp_typesupport_target})
 #######################################################################################
 ament_target_dependencies(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} rclcpp std_msgs)
 #######################################################################################
