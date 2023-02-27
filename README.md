@@ -13,7 +13,7 @@ This package provides the interface between [ROS2](https://github.com/ros2) and 
 #### How-to-build
 ```bash
 colcon_ws/src$ git clone --recursive https://github.com/107-systems/ros2_dynamixel_bridge
-colcon_ws$ source /opt/ros/galactic/setup.bash
+colcon_ws$ source /opt/ros/humble/setup.bash
 colcon_ws$ colcon build --packages-select ros2_dynamixel_bridge
 ```
 
