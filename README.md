@@ -20,7 +20,11 @@ colcon_ws$ colcon build --packages-select ros2_dynamixel_bridge
 #### How-to-run
 ```bash
 colcon_ws$ . install/setup.bash
-colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge.py
+colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge-default.py
+```
+or
+```bash
+colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge-l3xz.py
 ```
 
 #### Interface Documentation
