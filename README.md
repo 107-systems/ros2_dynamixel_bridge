@@ -26,7 +26,7 @@ colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge.py
 #### Interface Documentation
 ##### Subscribed Topics
 | Default name | Type | Description |
-|:-:|:-:|:-:|
+|:-:|:-:|-|
 | `/dynamixel/servo_1/angle/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** target angle / rad |
 | `/dynamixel/servo_1/angular_velocity/target` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** target angular velocity / rad/sec |
 | `/dynamixel/servo_1/mode/set` | [`msg/Mode.msg`](msg/Mode.msg) |  Servo **#1** operation mode (Position Control / Angular Velocity Control) |
@@ -40,7 +40,7 @@ colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge.py
 
 ##### Published Topics
 | Default name | Type | Description |
-|:-:|:-:|:-:|
+|:-:|:-:|-|
 | `/dynamixel/servo_1/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad |
 | `/dynamixel/servo_2/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad |
 | ... | ... | ... |
