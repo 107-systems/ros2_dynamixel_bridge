@@ -4,7 +4,7 @@
 [![Build Status](https://github.com/107-systems/ros2_dynamixel_bridge/actions/workflows/ros2.yml/badge.svg)](https://github.com/107-systems/ros2_dynamixel_bridge/actions/workflows/ros2.yml)
 [![Spell Check status](https://github.com/107-systems/ros2_dynamixel_bridge/actions/workflows/spell-check.yml/badge.svg)](https://github.com/107-systems/ros2_dynamixel_bridge/actions/workflows/spell-check.yml)
 
-This package provides the interface between [ROS2](https://github.com/ros2) and Robotis Dynamixel servos.
+This package provides the interface between [ROS2](https://github.com/ros2) and [Robotis Dynamixel](https://www.robotis.us/dynamixel/) servos.
 
 <p align="center">
   <a href="https://github.com/107-systems/l3xz"><img src="https://raw.githubusercontent.com/107-systems/.github/main/logo/l3xz-logo-memento-mori-github.png" width="40%"></a>
@@ -26,6 +26,7 @@ or
 ```bash
 colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge-l3xz.py
 ```
+Upon start-up the ROS2 node will scan the connected bus and automatically create topics for each discovered [Robotis Dynamixel](https://www.robotis.us/dynamixel/) servo.
 
 #### Interface Documentation
 ##### Subscribed Topics
