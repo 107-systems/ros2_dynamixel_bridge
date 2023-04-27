@@ -43,9 +43,9 @@ public:
   ~Node();
 
 private:
-  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_deg_pub;
-  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_vel_sub;
-  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_deg_sub;
+  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_actual_rad_pub;
+  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_target_vel_sub;
+  std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_target_rad_sub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<ros2_dynamixel_bridge::msg::Mode>::SharedPtr> _mode_sub;
 
   class ServoConfig
