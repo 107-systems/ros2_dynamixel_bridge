@@ -89,24 +89,24 @@ Node::Node()
 
     /* Automagically create ROS topics for Publishers and Subscribers. */
     std::stringstream
-      angle_deg_pub_topic,
-      angle_deg_sub_topic,
-      angle_vel_sub_topic,
+      angle_actual_rad_pub_topic,
+      angle_target_rad_sub_topic,
+      angle_target_vel_sub_topic,
       mode_sub_topic;
 
-    angle_deg_pub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/actual";
-    angle_deg_sub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/target";
-    angle_vel_sub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angular_velocity/target";
-    mode_sub_topic      << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/mode/set";
+    angle_actual_rad_pub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/actual";
+    angle_target_rad_sub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angle/target";
+    angle_target_vel_sub_topic << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/angular_velocity/target";
+    mode_sub_topic             << "/dynamixel/servo_" << static_cast<int>(servo_id) << "/mode/set";
 
     RCLCPP_INFO(get_logger(),
                 "initialize servo #%d\n\tInit. Pos. = %0.2f\n\tInit. Vel. = %0.2f\n\tPub:       = %s\n\tSub:       = %s\n\tSub:       = %s\n\tSub:       = %s",
                 static_cast<int>(servo_id),
                 servo_target->angle_deg(),
                 servo_target->angular_velocity_dps(),
-                angle_deg_pub_topic.str().c_str(),
-                angle_deg_sub_topic.str().c_str(),
-                angle_vel_sub_topic.str().c_str(),
+                angle_actual_rad_pub_topic.str().c_str(),
+                angle_target_rad_sub_topic.str().c_str(),
+                angle_target_vel_sub_topic.str().c_str(),
                 mode_sub_topic.str().c_str());
 
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
@@ -114,18 +114,18 @@ Node::Node()
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 
     /* Create per-servo publisher/subscriber. */
-    _angle_deg_pub[servo_id] = this->create_publisher<std_msgs::msg::Float32>(angle_deg_pub_topic.str(), 1);
+    _angle_actual_rad_pub[servo_id] = this->create_publisher<std_msgs::msg::Float32>(angle_actual_rad_pub_topic.str(), 1);
 
-    _angle_deg_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
-      (angle_deg_sub_topic.str(),
+    _angle_target_rad_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
+      (angle_target_rad_sub_topic.str(),
        1,
        [this, servo_target](std_msgs::msg::Float32::SharedPtr const msg)
        {
          servo_target->set_angle_deg(msg->data * 180.0f / M_PI);
        });
 
-    _angle_vel_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
-      (angle_vel_sub_topic.str(),
+    _angle_target_vel_sub[servo_id] = create_subscription<std_msgs::msg::Float32>
+      (angle_target_vel_sub_topic.str(),
        1,
        [this, servo_target](std_msgs::msg::Float32::SharedPtr const msg)
        {
@@ -239,7 +239,7 @@ void Node::io_loop()
   {
     std_msgs::msg::Float32 msg;
     msg.data = angle_deg * M_PI / 180.0f;
-    _angle_deg_pub.at(servo_id)->publish(msg);
+    _angle_actual_rad_pub.at(servo_id)->publish(msg);
   };
 
   /* Calculate RPMs and limit them for all servos. ************************************/
