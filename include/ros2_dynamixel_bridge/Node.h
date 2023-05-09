@@ -19,6 +19,7 @@
 #include <dynamixel++/dynamixel++.h>
 
 #include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/u_int64.hpp>
 
 #include <ros2_dynamixel_bridge/msg/mode.hpp>
 
@@ -43,6 +44,13 @@ public:
   ~Node();
 
 private:
+  std::chrono::steady_clock::time_point const _node_start;
+
+  rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr _heartbeat_pub;
+  static std::chrono::milliseconds constexpr HEARTBEAT_LOOP_RATE{100};
+  rclcpp::TimerBase::SharedPtr _heartbeat_loop_timer;
+  void init_heartbeat();
+
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr> _angle_actual_rad_pub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_target_vel_sub;
   std::map<dynamixelplusplus::Dynamixel::Id, rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr> _angle_target_rad_sub;

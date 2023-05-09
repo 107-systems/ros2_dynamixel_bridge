@@ -25,8 +25,11 @@ using namespace dynamixelplusplus;
 
 Node::Node()
 : rclcpp::Node("ros2_dynamixel_bridge")
+, _node_start{std::chrono::steady_clock::now()}
 , _prev_io_loop_timepoint{std::chrono::steady_clock::now()}
 {
+  init_heartbeat();
+
   /* Declare parameter. */
   declare_parameter("serial_port", "/dev/ttyUSB0");
   declare_parameter("serial_port_baudrate", (2*1000*1000));
@@ -185,6 +188,21 @@ Node::~Node()
 /**************************************************************************************
  * PRIVATE MEMBER FUNCTIONS
  ****************************************************dd**********************************/
+
+void Node::init_heartbeat()
+{
+  std::stringstream heartbeat_topic;
+  heartbeat_topic << "/l3xz/" << get_name() << "/heartbeat";
+  _heartbeat_pub = create_publisher<std_msgs::msg::UInt64>(heartbeat_topic.str(), 1);
+  _heartbeat_loop_timer = create_wall_timer(HEARTBEAT_LOOP_RATE,
+                                            [this]()
+                                            {
+                                              std_msgs::msg::UInt64 heartbeat_msg;
+                                              heartbeat_msg.data = std::chrono::duration_cast<std::chrono::seconds>(
+                                                std::chrono::steady_clock::now() - _node_start).count();
+                                              _heartbeat_pub->publish(heartbeat_msg);
+                                            });
+}
 
 void Node::io_loop()
 {
