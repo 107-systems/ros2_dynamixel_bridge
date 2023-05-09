@@ -47,12 +47,13 @@ Upon start-up the ROS2 node will scan the connected bus and automatically create
 | `/dynamixel/servo_n/mode/set` | [`msg/Mode.msg`](msg/Mode.msg) |  Servo **#n** operation mode (Position Control / Angular Velocity Control) |
 
 ##### Published Topics
-| Default name | Type | Description |
-|:-:|:-:|-|
-| `/dynamixel/servo_1/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad |
-| `/dynamixel/servo_2/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad |
-| ... | ... | ... |
-| `/dynamixel/servo_n/angle/actual` | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#n** current angle / rad |
+|              Default name               |                                      Type                                      | Description                                             |
+|:---------------------------------------:|:------------------------------------------------------------------------------:|---------------------------------------------------------|
+| `/l3xz/ros2_dynamixel_bridge/heartbeat` |  [`std_msgs/UInt64`](https://docs.ros2.org/foxy/api/std_msgs/msg/UInt64.html)  | Heartbeat signal containing the node uptime in seconds. |
+|    `/dynamixel/servo_1/angle/actual`    | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad                        |
+|    `/dynamixel/servo_2/angle/actual`    | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#1** current angle / rad                        |
+|                   ...                   |                                      ...                                       | ...                                                     |
+|    `/dynamixel/servo_n/angle/actual`    | [`std_msgs/Float32`](https://docs.ros2.org/foxy/api/std_msgs/msg/Float32.html) | Servo **#n** current angle / rad                        |
 
 ##### Parameters
 | Name | Default | Description |
