@@ -170,11 +170,9 @@ Node::Node()
   _mx28_sync_ctrl = std::make_shared<MX28AR::SyncGroup>(dyn_ctrl, dyn_id_vect);
 
   /* Configure periodic control loop function. */
-  _io_loop_timer = create_wall_timer
-    (std::chrono::milliseconds(IO_LOOP_RATE.count()),
-     [this]() { this->io_loop(); });
+  _io_loop_timer = create_wall_timer(IO_LOOP_RATE, [this]() { this->io_loop(); });
 
-  RCLCPP_INFO(get_logger(), "node initialization complete.");
+  RCLCPP_INFO(get_logger(), "%s init complete.", get_name());
 }
 
 Node::~Node()
@@ -183,6 +181,8 @@ Node::~Node()
   _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
   _mx28_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
   _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+
+  RCLCPP_INFO(get_logger(), "%s shut down successfully.", get_name());
 }
 
 /**************************************************************************************
