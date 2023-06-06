@@ -48,7 +48,8 @@ void Single::setOperatingMode(OperatingMode const operating_mode)
 
 void Single::setGoalPosition(float const angle_deg)
 {
-  uint32_t const angle_raw = static_cast<uint32_t>((angle_deg * 4096.0f) / 360.0f);
+  int32_t const angle_raw_signed = static_cast<int32_t>((angle_deg * 4096.0f) / 360.0f);
+  uint32_t const angle_raw = static_cast<uint32_t>(angle_raw_signed);
   _dyn_ctrl->write(static_cast<uint16_t>(ControlTable::GoalPosition), _id, angle_raw);
 }
 
@@ -78,7 +79,10 @@ void Single::setGoalVelocity(float const velocity_rpm)
 float Single::getPresentPosition()
 {
   uint32_t const angle_raw = _dyn_ctrl->read<uint32_t>(static_cast<uint16_t>(ControlTable::PresentPosition), _id);
-  float const angle_deg = static_cast<float>(angle_raw) * 360.0f / 4096.0f;
+  int32_t const signed_angle_raw = static_cast<int32_t>(angle_raw);
+
+  float const angle_deg = static_cast<float>(signed_angle_raw) * 360.0f / 4096.0f;
+
   return angle_deg;
 }
 

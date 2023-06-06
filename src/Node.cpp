@@ -116,7 +116,7 @@ Node::Node()
                 mode_sub_topic.str().c_str());
 
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-    servo_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+    servo_ctrl->setOperatingMode(MX28AR::OperatingMode::ExtendedPositionControlMode);
     servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 
     /* Create per-servo publisher/subscriber. */
@@ -149,7 +149,7 @@ Node::Node()
          if      (msg->servo_mode == ros2_dynamixel_bridge::msg::Mode::SERVO_MODE_VELOCITY_CONTROL)
            next_op_mode = MX28AR::OperatingMode::VelocityControlMode;
          else if (msg->servo_mode == ros2_dynamixel_bridge::msg::Mode::SERVO_MODE_POSITION_CONTROL)
-           next_op_mode = MX28AR::OperatingMode::PositionControlMode;
+           next_op_mode = MX28AR::OperatingMode::ExtendedPositionControlMode;
          else {
            RCLCPP_ERROR(get_logger(), "invalid value (%d) for parameter op mode.", static_cast<int>(msg->servo_mode));
            return;
@@ -182,7 +182,7 @@ Node::~Node()
 {
   /* Switch back to position control mode - and hold position. */
   _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::PositionControlMode);
+  _mx28_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::ExtendedPositionControlMode);
   _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 
   RCLCPP_INFO(get_logger(), "%s shut down successfully.", get_name());
