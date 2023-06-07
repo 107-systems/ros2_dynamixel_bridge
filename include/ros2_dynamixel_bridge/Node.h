@@ -60,7 +60,7 @@ private:
   private:
     MX28AR::OperatingMode _mode;
   public:
-    ServoConfig() : _mode{MX28AR::OperatingMode::PositionControlMode} { }
+    ServoConfig() : _mode{MX28AR::OperatingMode::ExtendedPositionControlMode} { }
     [[nodiscard]] MX28AR::OperatingMode mode() const { return _mode; }
     void set_mode(MX28AR::OperatingMode const mode) { _mode = mode; }
   };
