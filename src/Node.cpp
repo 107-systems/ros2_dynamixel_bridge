@@ -75,19 +75,20 @@ Node::Node()
     }
   }
 
-  /* Perform a reboot before configuring all servos. */
-  for (auto servo_id : dyn_id_vect)
-  {
-    /* Reboot all servo to start from a clean slate. */
-    dyn_ctrl->reboot(servo_id);
-  }
-  /* Wait a little so we can be sure that all servos are online again. */
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
   /* Create a map for individually controlling all the servos as well as all publishers and subscribers. */
   for (auto servo_id : dyn_id_vect)
   {
     auto servo_ctrl   = std::make_shared<MX28AR::Single>(dyn_ctrl, servo_id);
+
+    /* Reboot servo to start from a clean slate. */
+    servo_ctrl->reboot();
+    /* Wait a little so we can be sure that the servo is online again. */
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    /* Configure for extended position control mode. */
+    servo_ctrl->setOperatingMode(MX28AR::OperatingMode::ExtendedPositionControlMode);
+    /* Enable torque. */
+    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+
     auto servo_config = std::make_shared<ServoConfig>();
     auto servo_target = std::make_shared<ServoTarget>(0.0f, servo_ctrl->getPresentPosition());
 
@@ -114,10 +115,6 @@ Node::Node()
                 angle_target_rad_sub_topic.str().c_str(),
                 angle_target_vel_sub_topic.str().c_str(),
                 mode_sub_topic.str().c_str());
-
-    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-    servo_ctrl->setOperatingMode(MX28AR::OperatingMode::ExtendedPositionControlMode);
-    servo_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
 
     /* Create per-servo publisher/subscriber. */
     _angle_actual_rad_pub[servo_id] = this->create_publisher<std_msgs::msg::Float32>(angle_actual_rad_pub_topic.str(), 1);

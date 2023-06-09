@@ -27,7 +27,8 @@ ros2 launch ros2_dynamixel_bridge bridge-default.py
 ```
 or
 ```bash
-colcon_ws$ ros2 launch ros2_dynamixel_bridge bridge-l3xz.py
+cd $COLCON_WS
+ros2 launch ros2_dynamixel_bridge bridge-l3xz.py
 ```
 Upon start-up the ROS2 node will scan the connected bus and automatically create topics for each discovered [Robotis Dynamixel](https://www.robotis.us/dynamixel/) servo.
 
