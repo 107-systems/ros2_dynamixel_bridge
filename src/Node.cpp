@@ -178,9 +178,17 @@ Node::Node()
 Node::~Node()
 {
   /* Switch back to position control mode - and hold position. */
-  _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
-  _mx28_sync_ctrl->setOperatingMode(MX28AR::OperatingMode::ExtendedPositionControlMode);
-  _mx28_sync_ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+  for (auto const & [id, servo] : _mx28_map)
+  {
+    /* Ensure that the goal position is zero. */
+    servo.ctrl->setGoalVelocity(0.0f);
+    /* Ensure that the goal position is the current position. */
+    servo.ctrl->setGoalPosition(servo.ctrl->getPresentPosition());
+    /* Configure for position control mode. */
+    servo.ctrl->setTorqueEnable (MX28AR::TorqueEnable::Off);
+    servo.ctrl->setOperatingMode(MX28AR::OperatingMode::ExtendedPositionControlMode);
+    servo.ctrl->setTorqueEnable (MX28AR::TorqueEnable::On);
+  }
 
   RCLCPP_INFO(get_logger(), "%s shut down successfully.", get_name());
 }
