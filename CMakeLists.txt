@@ -8,6 +8,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(ros2_heartbeat REQUIRED)
+find_package(ros2_loop_rate_monitor REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 #######################################################################################
 add_subdirectory(external/libdynamixelplusplus)
@@ -37,7 +38,7 @@ rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typ
 #######################################################################################
 target_link_libraries(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} dynamixel++ ${cpp_typesupport_target})
 #######################################################################################
-ament_target_dependencies(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} rclcpp std_msgs ros2_heartbeat)
+ament_target_dependencies(${L3XZ_ROS_DYNAMIXEL_BRIDGE_TARGET} rclcpp std_msgs ros2_heartbeat ros2_loop_rate_monitor)
 #######################################################################################
 ament_export_dependencies(rosidl_default_runtime)
 #######################################################################################
