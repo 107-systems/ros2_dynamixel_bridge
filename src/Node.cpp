@@ -25,7 +25,6 @@ using namespace dynamixelplusplus;
 
 Node::Node()
 : rclcpp::Node("ros2_dynamixel_bridge")
-, _prev_io_loop_timepoint{std::chrono::steady_clock::now()}
 {
   init_heartbeat();
 
@@ -170,7 +169,10 @@ Node::Node()
   _mx28_sync_ctrl = std::make_shared<MX28AR::SyncGroup>(dyn_ctrl, dyn_id_vect);
 
   /* Configure periodic control loop function. */
-  _io_loop_timer = create_wall_timer(IO_LOOP_RATE, [this]() { this->io_loop(); });
+  _io_loop_rate_monitor = loop_rate::Monitor::create
+    (IO_LOOP_RATE, std::chrono::milliseconds(1));
+  _io_loop_timer = create_wall_timer
+    (IO_LOOP_RATE, [this]() { this->io_loop(); });
 
   RCLCPP_INFO(get_logger(), "%s init complete.", get_name());
 }
@@ -207,16 +209,18 @@ void Node::init_heartbeat()
 
 void Node::io_loop()
 {
-  auto const now = std::chrono::steady_clock::now();
-  auto const io_loop_rate = (now - _prev_io_loop_timepoint);
-  if (io_loop_rate > (IO_LOOP_RATE + std::chrono::milliseconds(1)))
+  _io_loop_rate_monitor->update();
+  if (auto const [timeout, opt_timeout_duration] = _io_loop_rate_monitor->isTimeout();
+    timeout == loop_rate::Monitor::Timeout::Yes)
+  {
     RCLCPP_WARN_THROTTLE(get_logger(),
                          *get_clock(),
-                         10*1000UL, /* 10 sec. */
+                         1000,
                          "io_loop should be called every %ld ms, but is %ld ms instead",
                          IO_LOOP_RATE.count(),
-                         std::chrono::duration_cast<std::chrono::milliseconds>(io_loop_rate).count());
-  _prev_io_loop_timepoint = now;
+                         opt_timeout_duration.value().count());
+  }
+
 
   /* This function contains the general error handling and recovery code. *************/
   auto dynamixel_error_hdl = [this](Dynamixel::Id const err_id)

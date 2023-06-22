@@ -22,6 +22,7 @@
 #include <std_msgs/msg/u_int64.hpp>
 
 #include <ros2_heartbeat/Publisher.h>
+#include <ros2_loop_rate_monitor/Monitor.h>
 
 #include <ros2_dynamixel_bridge/msg/mode.hpp>
 
@@ -91,8 +92,8 @@ private:
 
   std::shared_ptr<MX28AR::SyncGroup> _mx28_sync_ctrl;
 
-  std::chrono::steady_clock::time_point _prev_io_loop_timepoint;
   static std::chrono::milliseconds constexpr IO_LOOP_RATE{10};
+  loop_rate::Monitor::SharedPtr _io_loop_rate_monitor;
   rclcpp::TimerBase::SharedPtr _io_loop_timer;
   void io_loop();
 };
