@@ -21,7 +21,7 @@
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/u_int64.hpp>
 
-#include <ros2_heartbeat/Publisher.h>
+#include <ros2_heartbeat/publisher/Publisher.h>
 #include <ros2_loop_rate_monitor/Monitor.h>
 
 #include <ros2_dynamixel_bridge/msg/mode.hpp>
@@ -47,7 +47,6 @@ public:
   ~Node();
 
 private:
-  static std::chrono::milliseconds constexpr HEARTBEAT_LOOP_RATE{100};
   heartbeat::Publisher::SharedPtr _heartbeat_pub;
   void init_heartbeat();
 
