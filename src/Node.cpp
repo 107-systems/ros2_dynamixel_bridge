@@ -169,10 +169,15 @@ Node::Node()
   _mx28_sync_ctrl = std::make_shared<MX28AR::SyncGroup>(dyn_ctrl, dyn_id_vect);
 
   /* Configure periodic control loop function. */
-  _io_loop_rate_monitor = loop_rate::Monitor::create
-    (IO_LOOP_RATE, std::chrono::milliseconds(1));
-  _io_loop_timer = create_wall_timer
-    (IO_LOOP_RATE, [this]() { this->io_loop(); });
+  _io_loop_rate_monitor = loop_rate::Monitor::create(
+    IO_LOOP_RATE,
+    std::chrono::milliseconds(1)
+    );
+
+  _io_loop_timer = create_wall_timer(
+    IO_LOOP_RATE,
+    [this]() { this->io_loop(); }
+    );
 
   RCLCPP_INFO(get_logger(), "%s init complete.", get_name());
 }
@@ -204,7 +209,7 @@ void Node::init_heartbeat()
   std::stringstream heartbeat_topic;
   heartbeat_topic << "/l3xz/" << get_name() << "/heartbeat";
 
-  _heartbeat_pub = heartbeat::Publisher::create(*this, heartbeat_topic.str(), HEARTBEAT_LOOP_RATE);
+  _heartbeat_pub = heartbeat::Publisher::create(*this, heartbeat_topic.str());
 }
 
 void Node::io_loop()
